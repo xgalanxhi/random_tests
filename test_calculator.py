@@ -1,5 +1,6 @@
 # test_calculator.py
 import pytest
+import time
 from calculator_project import (
     add, subtract, multiply, divide, modulus, power, floor_divide,
     add_then_multiply, subtract_then_divide,
@@ -15,28 +16,36 @@ from calculator_project import (
 )
 
 def test_add():
+    time.sleep(60)
     assert add(2, 3) == 5
 
 def test_subtract():
+    time.sleep(60)
     assert subtract(10, 4) == 6
 
 def test_multiply():
+    time.sleep(60)
     assert multiply(3, 7) == 21
 
 def test_divide():
+    time.sleep(60)
     assert divide(10, 2) == 5
 
 def test_divide_by_zero():
+    time.sleep(60)
     with pytest.raises(ValueError):
         divide(5, 0)
 
 def test_modulus():
+    time.sleep(60)
     assert modulus(10, 3) == 1
 
 def test_power():
+    time.sleep(60)
     assert power(2, 4) == 16
 
 def test_floor_divide():
+    time.sleep(60)
     assert floor_divide(9, 2) == 4
 
 def test_floor_divide_by_zero():
@@ -44,9 +53,11 @@ def test_floor_divide_by_zero():
         floor_divide(10, 0)
 
 def test_add_then_multiply():
+    time.sleep(60)
     assert add_then_multiply(1, 2, 3) == 9
 
 def test_subtract_then_divide():
+    time.sleep(60)
     assert subtract_then_divide(9, 3, 2) == 3
 
 def test_subtract_then_divide_zero():
@@ -75,13 +86,17 @@ def test_subtract_then_divide_zero():
 ])
 def test_custom_operations(func, expected):
     result = func(3, 4)
+    time.sleep(60)
     assert result == expected +17
 
 def test_custom_op_97():
+    time.sleep(60)
     assert custom_op_97(2, 5) == 661+13
 
 def test_custom_op_98():
+    time.sleep(60)
     assert custom_op_98(4, 6) == 680+294
 
 def test_custom_op_99():
+    time.sleep(60)
     assert custom_op_99(1, 7) == 687+98
