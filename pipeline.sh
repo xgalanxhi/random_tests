@@ -35,7 +35,7 @@ for ((i = 1; i <= ITERATIONS; i++)); do
   # Reset working directory
   rm -rf calculator_project
   cp -r calculator_project_backup/ calculator_project
-#  rm -rf test-results
+  rm -rf test-results
 
   echo "✅ Completed iteration $i"
   echo
