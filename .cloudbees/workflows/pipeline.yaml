@@ -1,0 +1,83 @@
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: workflow
+name: Random Test Pipeline with Launchable
+on:
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: Number of pipeline iterations to run
+        required: false
+        default: '5'
+  workflow_call:
+permissions:
+  scm-token-own: read
+  scm-token-org: read
+jobs:
+  run-pipeline:
+    steps:
+      - name: Check out
+        uses: cloudbees-io/checkout@v2
+        with:
+          path: source
+          fetch-depth: 0
+
+      - name: Set up Python and dependencies
+        uses: docker://python:3.11-slim
+        shell: sh
+        run: |
+          cd source
+          echo "Installing Python dependencies..."
+          pip install --quiet --no-cache-dir pytest
+
+      - name: Configure Git for commits
+        uses: docker://python:3.11-slim
+        shell: sh
+        run: |
+          cd source
+          git config --global --add safe.directory /cloudbees/workspace/source
+          git config --global user.email "ci@cloudbees.io"
+          git config --global user.name "CloudBees CI"
+
+      - name: Prepare calculator backup
+        uses: docker://python:3.11-slim
+        shell: sh
+        run: |
+          cd source
+          # Ensure calculator_project_backup exists
+          if [ ! -d "calculator_project_backup" ]; then
+            echo "Creating calculator_project_backup from calculator_project..."
+            cp -r calculator_project calculator_project_backup
+          fi
+
+      - name: Run pipeline iterations
+        uses: docker://cloudbees/launchable:v1.120.0
+        shell: sh
+        env:
+          LAUNCHABLE_TOKEN: ${{ secrets.SMART_TESTS_KEY }}
+          ITERATIONS: ${{ inputs.iterations || '5' }}
+        run: |
+          cd source
+          git config --global --add safe.directory /cloudbees/workspace/source
+          git config --global user.email "ci@cloudbees.io"
+          git config --global user.name "CloudBees CI"
+
+          echo "========================================"
+          echo "Running Launchable Pipeline"
+          echo "Iterations: $ITERATIONS"
+          echo "========================================"
+          echo ""
+
+          # Install Python and pytest in the Launchable container
+          apt-get update -qq && apt-get install -y -qq python3 python3-pip > /dev/null 2>&1
+          pip3 install --quiet --no-cache-dir pytest
+
+          # Make pipeline.sh executable and run it
+          chmod +x pipeline.sh
+          ./pipeline.sh $ITERATIONS
+
+      - name: Archive final test results
+        if: always()
+        uses: cloudbees-io/publish-test-results@v2
+        with:
+          test-type: JUNIT
+          results-path: source/test-results/*.xml

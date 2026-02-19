@@ -62,6 +62,8 @@ launchable record tests --session <session-id> --allow-test-before-build --build
 
 ## Pipeline Automation
 
+### Local Execution
+
 The pipeline.sh script automates the testing workflow. Run multiple iterations:
 ```bash
 ./pipeline.sh <number-of-iterations>
@@ -75,6 +77,17 @@ Each iteration:
 5. Runs the selected tests with pytest
 6. Reports results to Launchable
 7. Resets to clean state from calculator_project_backup/
+
+### CloudBees Workflow
+
+The CloudBees workflow (`.cloudbees/workflows/pipeline.yaml`) runs the pipeline in CI/CD:
+- Triggered via workflow_dispatch with configurable iteration count (default: 5)
+- Sets up Python and pytest
+- Configures git for commits
+- Runs pipeline.sh with Launchable integration
+- Archives test results
+
+Required secret: `SMART_TESTS_KEY` (Launchable API token)
 
 ## Code Mutation System
 
