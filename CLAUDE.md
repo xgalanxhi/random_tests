@@ -36,6 +36,11 @@ Run all tests:
 pytest test_calculator.py
 ```
 
+Run all tests in parallel (uses all CPU cores):
+```bash
+pytest -n auto test_calculator.py
+```
+
 Run a single test:
 ```bash
 pytest test_calculator.py::test_add
@@ -46,9 +51,9 @@ Run tests with JUnit XML output:
 pytest --junit-xml=test-results/results.xml test_calculator.py
 ```
 
-Run only the Launchable-selected subset:
+Run only the Launchable-selected subset (with parallel execution):
 ```bash
-pytest @launchable-subset.txt
+pytest -n auto @launchable-subset.txt
 ```
 
 ## Launchable Workflow
@@ -87,7 +92,7 @@ Each iteration:
 2. Commits changes with git
 3. Records the build with Launchable
 4. Generates a 20% test subset based on mutation prediction
-5. Runs the selected tests with pytest
+5. Runs the selected tests with pytest in parallel (`-n auto`)
 6. Reports results to Launchable
 7. Resets to clean state from calculator_project_backup/
 
@@ -126,6 +131,8 @@ All calculator operations follow a simple pattern:
 - Custom operations use pytest parametrization for 87 similar tests
 - Three special custom operations (custom_op_97, custom_op_98, custom_op_99) have dedicated test functions
 - Tests include expected value adjustments (e.g., `expected + 17`) to match mutation patterns
+- Tests are stateless and can run in parallel using pytest-xdist (`-n auto`)
+- Each test sleeps for 60 seconds to simulate expensive tests; parallel execution significantly reduces total runtime
 
 ## Git Workflow
 
