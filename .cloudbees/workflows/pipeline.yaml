@@ -49,8 +49,8 @@ jobs:
           # Add pip user install location to PATH
           export PATH="/cloudbees/home/.local/bin:$PATH"
 
-          # Run the pipeline (using sh instead of chmod)
-          sh pipeline.sh $ITERATIONS
+          # Run the pipeline with bash (script uses bash syntax)
+          bash pipeline.sh $ITERATIONS
 
       - name: Archive final test results
         if: always()
