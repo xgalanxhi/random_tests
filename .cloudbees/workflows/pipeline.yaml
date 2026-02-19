@@ -6,6 +6,7 @@ on:
     inputs:
       iterations:
         description: Number of pipeline iterations to run
+        type: string
         required: false
         default: '5'
   workflow_call:
