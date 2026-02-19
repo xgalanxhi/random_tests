@@ -27,7 +27,7 @@ for ((i = 1; i <= ITERATIONS; i++)); do
    launchable record session --test-suite "random_pytest" --observation --build $NAME > launchable-session.txt
   # Subset and test
   cat test_list.txt | launchable subset --build $NAME --target 20% pytest > launchable-subset.txt
-  pytest -n auto --junit-xml=test-results/subset.xml @launchable-subset.txt
+  pytest -n auto --junit_family=legacy --junit-xml=test-results/subset.xml @launchable-subset.txt
 
   # Report to Launchable
   launchable record tests --session $(cat launchable-session.txt) --allow-test-before-build --build $NAME pytest ./test-results/
