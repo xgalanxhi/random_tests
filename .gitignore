@@ -1,0 +1,5 @@
+__pycache__/
+calculator_project_backup
+.pytest_cache
+pipeline.sh
+test-results
