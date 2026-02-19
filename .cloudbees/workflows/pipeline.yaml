@@ -44,12 +44,13 @@ jobs:
 
           # Install Python and dependencies
           echo "Installing Python and dependencies..."
-          apt-get update -qq && apt-get install -y -qq python3 python3-pip > /dev/null 2>&1
-          pip3 install --quiet --no-cache-dir -r requirements.txt
+          pip3 install --quiet --user -r requirements.txt
 
-          # Run the pipeline
-          chmod +x pipeline.sh
-          ./pipeline.sh $ITERATIONS
+          # Add pip user install location to PATH
+          export PATH="/cloudbees/home/.local/bin:$PATH"
+
+          # Run the pipeline (using sh instead of chmod)
+          sh pipeline.sh $ITERATIONS
 
       - name: Archive final test results
         if: always()
