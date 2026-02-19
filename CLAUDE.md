@@ -6,6 +6,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Launchable predictive test selection demonstration project. It contains a Python calculator library with 100+ operations and corresponding tests. The project uses intentional code mutations and Launchable's ML-powered test selection to demonstrate how predictive test selection can optimize CI/CD pipelines.
 
+## Setup
+
+Create and activate a virtual environment:
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
 ## Project Structure
 
 - **calculator_project/** - Active calculator module with ~100 operations (basic arithmetic + 90 custom operations)

@@ -1,0 +1,5 @@
+# Testing framework
+pytest>=7.4.0
+
+# Launchable CLI for predictive test selection
+launchable~=1.120.0

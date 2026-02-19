@@ -22,34 +22,6 @@ jobs:
           path: source
           fetch-depth: 0
 
-      - name: Set up Python and dependencies
-        uses: docker://python:3.11-slim
-        shell: sh
-        run: |
-          cd source
-          echo "Installing Python dependencies..."
-          pip install --quiet --no-cache-dir pytest
-
-      - name: Configure Git for commits
-        uses: docker://python:3.11-slim
-        shell: sh
-        run: |
-          cd source
-          git config --global --add safe.directory /cloudbees/workspace/source
-          git config --global user.email "ci@cloudbees.io"
-          git config --global user.name "CloudBees CI"
-
-      - name: Prepare calculator backup
-        uses: docker://python:3.11-slim
-        shell: sh
-        run: |
-          cd source
-          # Ensure calculator_project_backup exists
-          if [ ! -d "calculator_project_backup" ]; then
-            echo "Creating calculator_project_backup from calculator_project..."
-            cp -r calculator_project calculator_project_backup
-          fi
-
       - name: Run pipeline iterations
         uses: docker://cloudbees/launchable:v1.120.0
         shell: sh
@@ -58,9 +30,6 @@ jobs:
           ITERATIONS: ${{ inputs.iterations || '5' }}
         run: |
           cd source
-          git config --global --add safe.directory /cloudbees/workspace/source
-          git config --global user.email "ci@cloudbees.io"
-          git config --global user.name "CloudBees CI"
 
           echo "========================================"
           echo "Running Launchable Pipeline"
@@ -68,11 +37,17 @@ jobs:
           echo "========================================"
           echo ""
 
-          # Install Python and pytest in the Launchable container
-          apt-get update -qq && apt-get install -y -qq python3 python3-pip > /dev/null 2>&1
-          pip3 install --quiet --no-cache-dir pytest
+          # Configure git for commits during pipeline
+          git config --global --add safe.directory /cloudbees/workspace/source
+          git config --global user.email "ci@cloudbees.io"
+          git config --global user.name "CloudBees CI"
 
-          # Make pipeline.sh executable and run it
+          # Install Python and dependencies
+          echo "Installing Python and dependencies..."
+          apt-get update -qq && apt-get install -y -qq python3 python3-pip > /dev/null 2>&1
+          pip3 install --quiet --no-cache-dir -r requirements.txt
+
+          # Run the pipeline
           chmod +x pipeline.sh
           ./pipeline.sh $ITERATIONS
 
