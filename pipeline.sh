@@ -23,8 +23,8 @@ for ((i = 1; i <= ITERATIONS; i++)); do
 
   # Launchable tracking
   launchable record build --name $NAME
-  launchable record session --test-suite "random_pytest" --build $NAME > launchable-session.txt
-  #launchable record session --test-suite "random_pytest" --observation --build $NAME > launchable-session.txt
+  #launchable record session --test-suite "random_pytest" --build $NAME > launchable-session.txt
+  launchable record session --test-suite "random_pytest" --observation --build $NAME > launchable-session.txt
   # Subset and test
   cat test_list.txt | launchable subset --build $NAME --target 20% pytest > launchable-subset.txt
   pytest -n auto -o junit_family=legacy --junit-xml=test-results/subset.xml @launchable-subset.txt
