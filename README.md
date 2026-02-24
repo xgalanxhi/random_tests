@@ -13,6 +13,28 @@ This project simulates a real-world testing scenario where:
 
 **By the end of this lab**, you'll understand how Predictive Test Selection can cut test execution time by **~80%** while maintaining confidence in code quality.
 
+## Project Structure & Organization
+
+This project follows a clean, organized structure that separates concerns:
+
+```
+random_tests/
+├── src/calculator/          # Source code
+├── backup/calculator/       # Clean backup for resets
+├── test/                    # Test suite and identifiers
+├── cicd/                    # CI/CD automation
+│   ├── pipeline.sh
+│   ├── mutate_random_function.py
+│   └── temp/               # Temporary files (gitignored)
+└── .cloudbees/workflows/    # CloudBees CI/CD integration
+```
+
+**Key Benefits:**
+- ✅ **Clean separation** - Source, tests, CI/CD, and backups in dedicated directories
+- ✅ **Organized temp files** - All temporary files grouped in `cicd/temp/` (gitignored)
+- ✅ **Logical flow** - Pipeline resets at start → mutates → tests → reports
+- ✅ **Easy navigation** - Clear directory names following Python best practices
+
 ## Goals
 
 - Understand the core concepts of Predictive Test Selection (PTS)
@@ -211,15 +233,39 @@ random_tests/
 └── .cloudbees/workflows/        # CloudBees CI/CD integration
 ```
 
-**Key components:**
+**Directory Organization:**
 
-- **`src/calculator/`**: ~100 single-function calculator modules
-- **`test/test_calculator.py`**: Test suite with intentional 60-second delays to simulate expensive tests
-- **`cicd/pipeline.sh`**: Orchestrates the entire demo flow (mutation → subset → test → report)
-- **`cicd/mutate_random_function.py`**: Randomly modifies calculator functions to simulate code changes
+This project was refactored to follow Python best practices and CI/CD conventions:
+
+**Source Code (`src/calculator/`)**
+- ~100 single-function calculator modules (add.py, subtract.py, custom_op_10-99.py)
+- Clean production code separate from tests and CI/CD
+- Imported by tests via path manipulation
+
+**Tests (`test/`)**
+- `test_calculator.py` - Test suite with intentional 60-second delays to simulate expensive tests
+- `test_list.txt` - Full list of test identifiers for Launchable
+
+**CI/CD (`cicd/`)**
+- `pipeline.sh` - Main automation script orchestrating the entire demo flow
+- `mutate_random_function.py` - Randomly modifies calculator functions to simulate code changes
+- `temp/` - **All temporary files (gitignored)**:
+  - `launchable-session.txt` - Current test session ID
+  - `launchable-subset.txt` - Generated 20% test subset
+  - `test-results/` - JUnit XML test output
+
+**Backup (`backup/calculator/`)**
+- Clean copy used to reset state between pipeline iterations
+- Never modified during pipeline execution
+
+**Benefits of this structure:**
+- Clean separation between production code, tests, and CI/CD tooling
+- All temporary files organized in one gitignored location
+- Easy to navigate and understand
+- Follows Python project conventions
 
 ![PLACEHOLDER_DIAGRAM: Project architecture flowchart]
-<!-- Add diagram showing: Code Mutation → Git Commit → Launchable Build → Test Subset → Test Execution → Results → Reset -->
+<!-- Add diagram showing: Reset → Code Mutation → Git Commit → Launchable Build → Test Subset → Test Execution → Results → Clean Temp -->
 
 ### Step 6: Run Your First Iteration
 
@@ -799,6 +845,72 @@ Then tests complete faster, making demos more interactive.
 
 ---
 
+## Project Organization & Refactoring
+
+This project has been carefully organized to follow best practices for Python projects and CI/CD workflows.
+
+### Directory Structure Benefits
+
+**Clean Separation of Concerns:**
+- **`src/`** - Production source code only
+- **`test/`** - All test-related files
+- **`cicd/`** - CI/CD automation scripts and temporary files
+- **`backup/`** - Clean state for resets
+
+**Why `cicd/temp/` for Temporary Files:**
+
+All temporary files generated during the pipeline are stored in `cicd/temp/`:
+```
+cicd/temp/
+├── launchable-session.txt    # Current test session
+├── launchable-subset.txt     # Selected 20% test subset
+└── test-results/             # JUnit XML output
+    └── subset.xml
+```
+
+**Benefits:**
+1. **Organized** - All CI/CD files (scripts + temp) in one place
+2. **Clean root** - No temporary files cluttering the workspace
+3. **Logical grouping** - Temp files live with scripts that create them
+4. **Git-friendly** - Single `.gitignore` entry: `cicd/temp/`
+5. **Easy cleanup** - Just run `rm -rf cicd/temp/*`
+
+### Pipeline Flow Improvements
+
+The pipeline has been optimized for clarity and efficiency:
+
+**Reset at the Beginning (Not the End):**
+```bash
+for iteration in 1..N:
+  1. Reset to clean state (if iteration > 1)  ← Moved here!
+  2. Clean cicd/temp/
+  3. Mutate code
+  4. Commit & test
+  5. Report results
+```
+
+**Why this is better:**
+- Each iteration starts with a known clean state
+- More logical: prepare → execute → report
+- Failed iterations don't leave dirty state for next run
+- Easier to understand and debug
+
+### Migration from Old Structure
+
+**Before:**
+```
+calculator_project/          → src/calculator/
+calculator_project_backup/   → backup/calculator/
+test_calculator.py          → test/test_calculator.py
+test_list.txt              → test/test_list.txt
+pipeline.sh                → cicd/pipeline.sh
+(root temp files)          → cicd/temp/
+```
+
+All code, documentation, and workflows have been updated to reflect this new structure.
+
+---
+
 ## Troubleshooting
 
 ### Common Issues
@@ -898,6 +1010,7 @@ Congratulations! You've successfully completed the Launchable Predictive Test Se
 **What you accomplished:**
 
 ✅ Set up a complete Launchable PTS environment
+✅ Understood a clean, well-organized project structure following Python best practices
 ✅ Ran automated mutation testing with intelligent test selection
 ✅ Observed ML-driven test optimization in action
 ✅ Integrated PTS into a CloudBees CI/CD pipeline
@@ -910,6 +1023,7 @@ Congratulations! You've successfully completed the Launchable Predictive Test Se
 - ⚡ **Parallel execution multiplies time savings**
 - 🔧 **Integration with CI/CD is straightforward and non-invasive**
 - 📊 **Subset quality remains high (90-95%+ accuracy) even with aggressive targets**
+- 📁 **Clean project structure separates source, tests, and CI/CD concerns**
 
 ### Next Steps
 
