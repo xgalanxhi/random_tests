@@ -191,26 +191,32 @@ Before running the demo, let's understand what we're working with:
 
 ```
 random_tests/
-├── calculator_project/          # Active calculator module (~100 operations)
-│   ├── add.py, subtract.py, ... # Basic arithmetic operations
-│   ├── custom_op_10.py ... 99   # 90 custom compound operations
-│   └── mutate_random_function.py
-├── calculator_project_backup/   # Clean backup for resets between iterations
-├── test_calculator.py           # 103 tests (each sleeps 60s)
-├── pipeline.sh                  # ⭐ Main automation script
-├── test_list.txt                # Full list of test identifiers
-├── launchable-subset.txt        # Generated subset (20% of tests)
-├── launchable-session.txt       # Current session ID
+├── src/
+│   └── calculator/              # Active calculator module (~100 operations)
+│       ├── add.py, subtract.py, ... # Basic arithmetic operations
+│       └── custom_op_10.py ... 99   # 90 custom compound operations
+├── backup/
+│   └── calculator/              # Clean backup for resets between iterations
+├── test/
+│   ├── test_calculator.py       # 103 tests (each sleeps 60s)
+│   └── test_list.txt            # Full list of test identifiers
+├── cicd/
+│   ├── pipeline.sh              # ⭐ Main automation script
+│   ├── mutate_random_function.py # Random code mutation script
+│   └── temp/                    # Temporary files (gitignored)
+│       ├── launchable-subset.txt    # Generated subset (20% of tests)
+│       ├── launchable-session.txt   # Current session ID
+│       └── test-results/            # JUnit XML test results
 ├── requirements.txt             # Python dependencies
 └── .cloudbees/workflows/        # CloudBees CI/CD integration
 ```
 
 **Key components:**
 
-- **`calculator_project/`**: ~100 single-function calculator modules
-- **`test_calculator.py`**: Test suite with intentional 60-second delays to simulate expensive tests
-- **`pipeline.sh`**: Orchestrates the entire demo flow (mutation → subset → test → report)
-- **`mutate_random_function.py`**: Randomly modifies calculator functions to simulate code changes
+- **`src/calculator/`**: ~100 single-function calculator modules
+- **`test/test_calculator.py`**: Test suite with intentional 60-second delays to simulate expensive tests
+- **`cicd/pipeline.sh`**: Orchestrates the entire demo flow (mutation → subset → test → report)
+- **`cicd/mutate_random_function.py`**: Randomly modifies calculator functions to simulate code changes
 
 ![PLACEHOLDER_DIAGRAM: Project architecture flowchart]
 <!-- Add diagram showing: Code Mutation → Git Commit → Launchable Build → Test Subset → Test Execution → Results → Reset -->
@@ -220,20 +226,21 @@ random_tests/
 Let's run a single iteration to see how the system works:
 
 ```bash
-./pipeline.sh 1
+./cicd/pipeline.sh 1
 ```
 
 **What happens during this iteration:**
 
-1. 📝 **Mutation**: 0–3 random calculator functions are modified
+1. 🔄 **Reset**: Code is restored from backup/calculator/ (except first iteration)
+2. 🧹 **Clean Temp**: cicd/temp/ directory is cleaned
+3. 📝 **Mutation**: 0–3 random calculator functions are modified
    - (50% chance of no mutation to provide baseline data)
-2. 💾 **Git Commit**: Changes are committed with hash used as build name
-3. 🔨 **Build Recording**: Launchable records the current code state
-4. 🧪 **Test Session**: A new test session is created
-5. 🎯 **Subset Generation**: Launchable predicts which 20% of tests to run
-6. ▶️ **Test Execution**: Selected tests run in parallel with pytest-xdist
-7. 📊 **Result Reporting**: Results are sent back to Launchable
-8. 🔄 **Reset**: Code is restored from backup for next iteration
+4. 💾 **Git Commit**: Changes are committed with hash used as build name
+5. 🔨 **Build Recording**: Launchable records the current code state
+6. 🧪 **Test Session**: A new test session is created (saved to cicd/temp/)
+7. 🎯 **Subset Generation**: Launchable predicts which 20% of tests to run (saved to cicd/temp/)
+8. ▶️ **Test Execution**: Selected tests run in parallel with pytest-xdist
+9. 📊 **Result Reporting**: Results are sent back to Launchable
 
 ![PLACEHOLDER_GIF: Single iteration running in terminal]
 <!-- Add animated GIF showing one complete iteration from start to finish -->
@@ -294,10 +301,10 @@ git show HEAD
 Launchable selected 21 tests (20% of 103 total). You can inspect the subset:
 
 ```bash
-cat launchable-subset.txt
+cat cicd/temp/launchable-subset.txt
 ```
 
-![PLACEHOLDER_SCREENSHOT: Content of launchable-subset.txt]
+![PLACEHOLDER_SCREENSHOT: Content of cicd/temp/launchable-subset.txt]
 <!-- Add screenshot showing the list of selected tests -->
 
 #### Parallel Execution
@@ -308,7 +315,7 @@ The tests ran in parallel (`pytest -n auto`), significantly reducing execution t
 Now let's run **5 iterations** to see Launchable learn from the accumulated data:
 
 ```bash
-./pipeline.sh 5
+./cicd/pipeline.sh 5
 ```
 
 This will take approximately 10-15 minutes total (depending on your CPU cores).
@@ -503,7 +510,7 @@ jobs:
           git config --global user.name "CloudBees CI"
 
           # Run the pipeline
-          bash pipeline.sh $ITERATIONS
+          bash cicd/pipeline.sh $ITERATIONS
 ```
 
 The workflow:
@@ -511,7 +518,7 @@ The workflow:
 - ✅ Fetches full repository history for accurate predictions
 - ✅ Installs dependencies from `requirements.txt`
 - ✅ Configures git for commits during pipeline execution
-- ✅ Runs `pipeline.sh` with configurable iteration count
+- ✅ Runs `cicd/pipeline.sh` with configurable iteration count
 - ✅ Archives JUnit XML test results
 
 ![PLACEHOLDER_SCREENSHOT: Workflow YAML file in editor]
@@ -552,7 +559,7 @@ Navigate to the workflow run page to see the execution status:
 The workflow progresses through these stages:
 
 1. ✅ **Check out** - Repository cloned with full history
-2. 🔄 **Run pipeline iterations** - Executing `pipeline.sh`
+2. 🔄 **Run pipeline iterations** - Executing `cicd/pipeline.sh`
    - Installing Python dependencies
    - Configuring git
    - Running iterations
@@ -614,7 +621,7 @@ The pipeline automatically reports all results to Launchable. Navigate to your w
 
 ### How the Code Mutation System Works
 
-The mutation system (`calculator_project/mutate_random_function.py`) simulates realistic code changes:
+The mutation system (`cicd/mutate_random_function.py`) simulates realistic code changes:
 
 **Mutation probability:**
 - **50% chance**: No mutation (provides baseline/control data)
@@ -751,22 +758,23 @@ launchable record build --name my-custom-build
 launchable record session --test-suite "random_pytest" --build my-custom-build > session.txt
 
 # 3. Generate subset with different target (e.g., 30%)
-cat test_list.txt | launchable subset --build my-custom-build --target 30% pytest > my-subset.txt
+mkdir -p cicd/temp
+cat test/test_list.txt | launchable subset --build my-custom-build --target 30% pytest > cicd/temp/my-subset.txt
 
 # 4. Run the subset
-pytest -n auto @my-subset.txt --junit-xml=test-results/results.xml
+pytest -n auto @cicd/temp/my-subset.txt --junit-xml=cicd/temp/test-results/results.xml
 
 # 5. Report results
-launchable record tests --session $(cat session.txt) pytest test-results/
+launchable record tests --session $(cat session.txt) pytest cicd/temp/test-results/
 ```
 
 ### Adjusting the Target Percentage
 
-Edit `pipeline.sh` line 29 to change the subset size:
+Edit `cicd/pipeline.sh` line 40 to change the subset size:
 
 ```bash
 # Change from 20% to 30%
-cat test_list.txt | launchable subset --build $NAME --target 30% pytest > launchable-subset.txt
+cat test/test_list.txt | launchable subset --build $NAME --target 30% pytest > cicd/temp/launchable-subset.txt
 ```
 
 ### Running Tests Sequentially (for Debugging)
@@ -774,13 +782,13 @@ cat test_list.txt | launchable subset --build $NAME --target 30% pytest > launch
 If you need to debug individual test failures, run without parallelization:
 
 ```bash
-# Edit pipeline.sh line 30, remove -n auto
+# Edit cicd/pipeline.sh line 30, remove -n auto
 pytest --junit-xml=test-results/subset.xml @launchable-subset.txt
 ```
 
 ### Reducing Test Sleep Time (Faster Demo)
 
-For quicker demonstrations, reduce the sleep time in `test_calculator.py`:
+For quicker demonstrations, reduce the sleep time in `test/test_calculator.py`:
 
 ```python
 # Change from 60 seconds to 10 seconds
@@ -811,12 +819,12 @@ which launchable
 
 ---
 
-#### Issue: `permission denied: ./pipeline.sh`
+#### Issue: `permission denied: ./cicd/pipeline.sh`
 
 **Solution:** Make the script executable
 
 ```bash
-chmod +x pipeline.sh
+chmod +x cicd/pipeline.sh
 ```
 
 ---
@@ -825,9 +833,9 @@ chmod +x pipeline.sh
 
 **Solution:** Ensure parallel execution is enabled
 
-Check that `pipeline.sh` line 30 includes `-n auto`:
+Check that `cicd/pipeline.sh` line 41 includes `-n auto`:
 ```bash
-pytest -n auto --junit-xml=test-results/subset.xml @launchable-subset.txt
+pytest -n auto --junit-xml=cicd/temp/test-results/subset.xml @cicd/temp/launchable-subset.txt
 ```
 
 Verify pytest-xdist is installed:
@@ -916,8 +924,8 @@ Ready to apply this to your own projects?
 
 If you're using this demo for a presentation or workshop:
 
-1. Run `./pipeline.sh 5` and narrate what's happening
-2. Open `launchable-subset.txt` and show it's ~20% of tests
+1. Run `./cicd/pipeline.sh 5` and narrate what's happening
+2. Open `cicd/temp/launchable-subset.txt` and show it's ~20% of tests
 3. Point out which files mutated and which tests were selected
 4. Show a test failure and explain how Launchable learns from it
 5. Compare iteration 1 vs iteration 5 subset quality

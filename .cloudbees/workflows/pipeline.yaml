@@ -50,11 +50,11 @@ jobs:
           export PATH="/cloudbees/home/.local/bin:$PATH"
 
           # Run the pipeline with bash (script uses bash syntax)
-          bash pipeline.sh $ITERATIONS
+          bash cicd/pipeline.sh $ITERATIONS
 
       - name: Archive final test results
         if: always()
         uses: cloudbees-io/publish-test-results@v2
         with:
           test-type: JUNIT
-          results-path: source/test-results/*.xml
+          results-path: source/cicd/temp/test-results/*.xml
