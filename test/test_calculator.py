@@ -19,7 +19,7 @@ from calculator import (
     custom_op_90, custom_op_91, custom_op_92, custom_op_93, custom_op_94, custom_op_95, custom_op_96, custom_op_97, custom_op_98, custom_op_99
 )
 
-sleep_time = 2
+sleep_time = 60
 
 def test_add():
     time.sleep(sleep_time)
