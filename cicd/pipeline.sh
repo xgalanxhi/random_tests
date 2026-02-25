@@ -40,7 +40,8 @@ for ((i = 1; i <= ITERATIONS; i++)); do
 
   # Subset and test
   cat test/test_list.txt | smart-tests subset  --session $(cat cicd/temp/session.txt) --target 20% pytest > cicd/temp/subset.txt
-  pytest -n 50 -o junit_family=legacy --junit-xml=cicd/temp/test-results/subset.xml @cicd/temp/subset.txt
+  export TEST_SLEEP_TIME=0 
+  pytest -n auto -o junit_family=legacy --junit-xml=cicd/temp/test-results/subset.xml @cicd/temp/subset.txt
 
   # Report to Smart Tests
   smart-tests record tests --session $(cat cicd/temp/session.txt) --allow-test-before-build --session $(cat cicd/temp/session.txt) pytest cicd/temp/test-results/
