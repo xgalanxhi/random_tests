@@ -1,6 +1,6 @@
 apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
-name: Random Test Pipeline with Launchable
+name: Random Test Pipeline with Smart Tests
 on:
   workflow_dispatch:
     inputs:
@@ -23,16 +23,16 @@ jobs:
           fetch-depth: 0
 
       - name: Run pipeline iterations
-        uses: docker://cloudbees/launchable:v1.120.0
+        uses: docker://cloudbees/smart-tests-cli:v2.0
         shell: sh
         env:
-          LAUNCHABLE_TOKEN: ${{ secrets.SMART_TESTS_KEY }}
+          SMART_TESTS_TOKEN: ${{ secrets.SMART_TESTS_KEY }}
           ITERATIONS: ${{ inputs.iterations || '5' }}
         run: |
           cd source
 
           echo "========================================"
-          echo "Running Launchable Pipeline"
+          echo "Running Smart Tests Pipeline"
           echo "Iterations: $ITERATIONS"
           echo "========================================"
           echo ""

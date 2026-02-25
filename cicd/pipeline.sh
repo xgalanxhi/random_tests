@@ -34,16 +34,16 @@ for ((i = 1; i <= ITERATIONS; i++)); do
   # Get commit hash
   NAME=$(git rev-parse --short HEAD)
 
-  # Launchable tracking
-  launchable record build --name $NAME
-  launchable record session --test-suite "random_pytest" --observation --build $NAME > cicd/temp/launchable-session.txt
+  # Smart Tests tracking
+  smart-tests record build --name $NAME
+  smart-tests record session --test-suite "random_pytest" --observation --build $NAME > cicd/temp/session.txt
 
   # Subset and test
-  cat test/test_list.txt | launchable subset --build $NAME --target 20% pytest > cicd/temp/launchable-subset.txt
-  pytest -n 50 -o junit_family=legacy --junit-xml=cicd/temp/test-results/subset.xml @cicd/temp/launchable-subset.txt
+  cat test/test_list.txt | smart-tests subset --build $NAME --target 20% pytest > cicd/temp/subset.txt
+  pytest -n 50 -o junit_family=legacy --junit-xml=cicd/temp/test-results/subset.xml @cicd/temp/subset.txt
 
-  # Report to Launchable
-  launchable record tests --session $(cat cicd/temp/launchable-session.txt) --allow-test-before-build --build $NAME pytest cicd/temp/test-results/
+  # Report to Smart Tests
+  smart-tests record tests --session $(cat cicd/temp/session.txt) --allow-test-before-build --build $NAME pytest cicd/temp/test-results/
 
   echo "✅ Completed iteration $i"
   echo

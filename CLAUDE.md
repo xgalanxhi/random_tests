@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a Launchable predictive test selection demonstration project. It contains a Python calculator library with 100+ operations and corresponding tests. The project uses intentional code mutations and Launchable's ML-powered test selection to demonstrate how predictive test selection can optimize CI/CD pipelines.
+This is a Smart Tests predictive test selection demonstration project. It contains a Python calculator library with 100+ operations and corresponding tests. The project uses intentional code mutations and Smart Tests's ML-powered test selection to demonstrate how predictive test selection can optimize CI/CD pipelines.
 
 ## Setup
 
@@ -28,8 +28,8 @@ pip install -r requirements.txt
 - **cicd/pipeline.sh** - Automated testing pipeline that mutates code, selects test subsets, and reports results
 - **cicd/mutate_random_function.py** - Script that randomly mutates calculator functions
 - **cicd/temp/** - Temporary files generated during pipeline execution (gitignored)
-  - **cicd/temp/launchable-subset.txt** - Launchable-selected test subset (20% of total tests)
-  - **cicd/temp/launchable-session.txt** - Current Launchable test session metadata
+  - **cicd/temp/subset.txt** - Smart Tests-selected test subset (20% of total tests)
+  - **cicd/temp/session.txt** - Current Smart Tests test session metadata
   - **cicd/temp/test-results/** - JUnit XML test results
 
 ## Running Tests
@@ -54,32 +54,32 @@ Run tests with JUnit XML output:
 pytest --junit-xml=test-results/results.xml test/
 ```
 
-Run only the Launchable-selected subset (with parallel execution):
+Run only the Smart Tests-selected subset (with parallel execution):
 ```bash
-pytest -n auto @cicd/temp/launchable-subset.txt
+pytest -n auto @cicd/temp/subset.txt
 ```
 
-## Launchable Workflow
+## Smart Tests Workflow
 
 Record a build:
 ```bash
-launchable record build --name <build-name>
+smart-tests record build --name <build-name>
 ```
 
 Create a test session:
 ```bash
-launchable record session --test-suite "random_pytest" --observation --build <build-name>
+smart-tests record session --test-suite "random_pytest" --observation --build <build-name>
 ```
 
 Generate test subset (20% target):
 ```bash
 mkdir -p cicd/temp
-cat test/test_list.txt | launchable subset --build <build-name> --target 20% pytest > cicd/temp/launchable-subset.txt
+cat test/test_list.txt | smart-tests subset --build <build-name> --target 20% pytest > cicd/temp/subset.txt
 ```
 
 Report test results:
 ```bash
-launchable record tests --session <session-id> --allow-test-before-build --build <build-name> pytest cicd/temp/test-results/
+smart-tests record tests --session <session-id> --allow-test-before-build --build <build-name> pytest cicd/temp/test-results/
 ```
 
 ## Pipeline Automation
@@ -96,10 +96,10 @@ Each iteration:
 2. Cleans cicd/temp/ directory
 3. Mutates 0-3 random calculator functions using cicd/mutate_random_function.py
 4. Commits changes with git
-5. Records the build with Launchable
+5. Records the build with Smart Tests
 6. Generates a 20% test subset based on mutation prediction (saved to cicd/temp/)
 7. Runs the selected tests with pytest in parallel (`-n auto`)
-8. Reports results to Launchable
+8. Reports results to Smart Tests
 
 ### CloudBees Workflow
 
@@ -107,10 +107,10 @@ The CloudBees workflow (`.cloudbees/workflows/pipeline.yaml`) runs the pipeline 
 - Triggered via workflow_dispatch with configurable iteration count (default: 5)
 - Sets up Python and pytest
 - Configures git for commits
-- Runs cicd/pipeline.sh with Launchable integration
+- Runs cicd/pipeline.sh with Smart Tests integration
 - Archives test results
 
-Required secret: `SMART_TESTS_KEY` (Launchable API token)
+Required secret: `SMART_TESTS_KEY` (Smart Tests API token)
 
 ## Code Mutation System
 

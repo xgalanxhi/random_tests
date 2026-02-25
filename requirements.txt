@@ -2,5 +2,5 @@
 pytest>=7.4.0
 pytest-xdist>=3.5.0
 
-# Launchable CLI for predictive test selection
-launchable~=1.120.0
+# Smart Tests CLI for predictive test selection
+smart-tests-cli~=2.0

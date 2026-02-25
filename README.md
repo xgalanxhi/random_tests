@@ -1,13 +1,13 @@
-# Launchable Predictive Test Selection Demo
+# Smart Tests Predictive Test Selection Demo
 
-Welcome to the Launchable Predictive Test Selection (PTS) demonstration lab! This hands-on project showcases how Launchable's AI-powered test selection can dramatically reduce CI/CD testing time by intelligently selecting only the most relevant tests based on code changes.
+Welcome to the Smart Tests Predictive Test Selection (PTS) demonstration lab! This hands-on project showcases how Smart Tests's AI-powered test selection can dramatically reduce CI/CD testing time by intelligently selecting only the most relevant tests based on code changes.
 
 ## What This Lab Demonstrates
 
 This project simulates a real-world testing scenario where:
 - A Python calculator application has **103 tests** that each take **60 seconds** to run (total: ~103 minutes)
 - Code mutations are introduced randomly to simulate development changes
-- Launchable's ML model predicts which tests are affected and selects only **20% of the test suite**
+- Smart Tests's ML model predicts which tests are affected and selects only **20% of the test suite**
 - Tests run in parallel using pytest-xdist for maximum efficiency
 - Results are tracked across multiple iterations to show learning improvements
 
@@ -38,9 +38,9 @@ random_tests/
 ## Goals
 
 - Understand the core concepts of Predictive Test Selection (PTS)
-- Set up and configure Launchable for predictive test selection
+- Set up and configure Smart Tests for predictive test selection
 - Execute an automated mutation testing pipeline
-- Observe how Launchable learns from test results over time
+- Observe how Smart Tests learns from test results over time
 - Integrate PTS into a CloudBees CI/CD workflow
 - Analyze test selection accuracy and time savings
 
@@ -50,12 +50,12 @@ random_tests/
   - [Step 1: Prerequisites](#step-1-prerequisites)
   - [Step 2: Clone the Repository](#step-2-clone-the-repository)
   - [Step 3: Set Up Python Environment](#step-3-set-up-python-environment)
-  - [Step 4: Configure Launchable](#step-4-configure-launchable)
+  - [Step 4: Configure Smart Tests](#step-4-configure-smart-tests)
 - **Running the Demo Locally**
   - [Step 5: Understand the Project Structure](#step-5-understand-the-project-structure)
   - [Step 6: Run Your First Iteration](#step-6-run-your-first-iteration)
   - [Step 7: Run Multiple Iterations](#step-7-run-multiple-iterations)
-  - [Step 8: Analyze Results in Launchable](#step-8-analyze-results-in-launchable)
+  - [Step 8: Analyze Results in Smart Tests](#step-8-analyze-results-in-smart-tests)
 - **CI/CD Integration**
   - [Step 9: Deploy to CloudBees](#step-9-deploy-to-cloudbees)
   - [Step 10: Monitor Pipeline Execution](#step-10-monitor-pipeline-execution)
@@ -79,8 +79,8 @@ Before starting this lab, ensure you have:
    git --version
    ```
 
-3. A **Launchable account** with API token access
-   - Sign up at [app.launchableinc.com](https://app.launchableinc.com) if you don't have one yet
+3. A **Smart Tests account** with API token access
+   - Sign up at [app.cloudbees.com/smart-tests](https://app.cloudbees.com/smart-tests) if you don't have one yet
 
 4. (Optional) **CloudBees platform access** for CI/CD integration
 
@@ -118,41 +118,41 @@ Verify the installation was successful:
 
 ```bash
 pytest --version
-launchable --version
+smart-tests --version
 ```
 
 Expected output:
 
 ```
 pytest 7.4.0
-launchable, version 1.120.0
+smart-tests, version 2.0
 ```
 
 ![PLACEHOLDER_SCREENSHOT: Terminal showing successful package installation]
 <!-- Add screenshot showing pip install completion and version checks -->
 
 > [!TIP]
-> If `launchable` is not found on your PATH:
+> If `smart-tests` is not found on your PATH:
 > <details>
 > Run the following command to find where pip installed the script:
 >
 > ```bash
-> pip3 show --files launchable | grep -E 'bin/launchable$|^Location'
+> pip3 show --files smart-tests | grep -E 'bin/smart-tests$|^Location'
 > ```
 >
 > Add the bin directory to your PATH if needed.
 > </details>
 
-### Step 4: Configure Launchable
+### Step 4: Configure Smart Tests
 
 #### Obtain Your API Token
 
-1. Log in to your Launchable workspace at [app.launchableinc.com](https://app.launchableinc.com)
+1. Log in to your Smart Tests workspace at [app.cloudbees.com/smart-tests](https://app.cloudbees.com/smart-tests)
 2. Navigate to **Settings > API Tokens**
 3. Click **Generate New Token** or **Copy** an existing token
 
-![PLACEHOLDER_SCREENSHOT: Launchable API token page]
-<!-- Add screenshot of the Launchable workspace showing Settings > API Tokens -->
+![PLACEHOLDER_SCREENSHOT: Smart Tests API token page]
+<!-- Add screenshot of the Smart Tests workspace showing Settings > API Tokens -->
 
 <br>
 
@@ -182,7 +182,7 @@ source .env
 Run the verification command to ensure everything is set up correctly:
 
 ```bash
-launchable verify
+smart-tests verify
 ```
 
 If successful, you should see output similar to:
@@ -192,11 +192,11 @@ Organization: 'your-organization'
 Workspace: 'your-workspace'
 Platform: 'Darwin-25.3.0-arm64-arm-64bit'
 Python version: '3.11.5'
-launchable version: '1.120.0'
+smart-tests version: '1.120.0'
 Your CLI configuration is successfully verified 🎉
 ```
 
-![PLACEHOLDER_SCREENSHOT: Successful launchable verify output]
+![PLACEHOLDER_SCREENSHOT: Successful smart-tests verify output]
 <!-- Add screenshot showing the successful verification message -->
 
 ___
@@ -226,8 +226,8 @@ random_tests/
 │   ├── pipeline.sh              # ⭐ Main automation script
 │   ├── mutate_random_function.py # Random code mutation script
 │   └── temp/                    # Temporary files (gitignored)
-│       ├── launchable-subset.txt    # Generated subset (20% of tests)
-│       ├── launchable-session.txt   # Current session ID
+│       ├── subset.txt    # Generated subset (20% of tests)
+│       ├── session.txt   # Current session ID
 │       └── test-results/            # JUnit XML test results
 ├── requirements.txt             # Python dependencies
 └── .cloudbees/workflows/        # CloudBees CI/CD integration
@@ -244,14 +244,14 @@ This project was refactored to follow Python best practices and CI/CD convention
 
 **Tests (`test/`)**
 - `test_calculator.py` - Test suite with intentional 60-second delays to simulate expensive tests
-- `test_list.txt` - Full list of test identifiers for Launchable
+- `test_list.txt` - Full list of test identifiers for Smart Tests
 
 **CI/CD (`cicd/`)**
 - `pipeline.sh` - Main automation script orchestrating the entire demo flow
 - `mutate_random_function.py` - Randomly modifies calculator functions to simulate code changes
 - `temp/` - **All temporary files (gitignored)**:
-  - `launchable-session.txt` - Current test session ID
-  - `launchable-subset.txt` - Generated 20% test subset
+  - `session.txt` - Current test session ID
+  - `subset.txt` - Generated 20% test subset
   - `test-results/` - JUnit XML test output
 
 **Backup (`backup/calculator/`)**
@@ -265,7 +265,7 @@ This project was refactored to follow Python best practices and CI/CD convention
 - Follows Python project conventions
 
 ![PLACEHOLDER_DIAGRAM: Project architecture flowchart]
-<!-- Add diagram showing: Reset → Code Mutation → Git Commit → Launchable Build → Test Subset → Test Execution → Results → Clean Temp -->
+<!-- Add diagram showing: Reset → Code Mutation → Git Commit → Smart Tests Build → Test Subset → Test Execution → Results → Clean Temp -->
 
 ### Step 6: Run Your First Iteration
 
@@ -282,11 +282,11 @@ Let's run a single iteration to see how the system works:
 3. 📝 **Mutation**: 0–3 random calculator functions are modified
    - (50% chance of no mutation to provide baseline data)
 4. 💾 **Git Commit**: Changes are committed with hash used as build name
-5. 🔨 **Build Recording**: Launchable records the current code state
+5. 🔨 **Build Recording**: Smart Tests records the current code state
 6. 🧪 **Test Session**: A new test session is created (saved to cicd/temp/)
-7. 🎯 **Subset Generation**: Launchable predicts which 20% of tests to run (saved to cicd/temp/)
+7. 🎯 **Subset Generation**: Smart Tests predicts which 20% of tests to run (saved to cicd/temp/)
 8. ▶️ **Test Execution**: Selected tests run in parallel with pytest-xdist
-9. 📊 **Result Reporting**: Results are sent back to Launchable
+9. 📊 **Result Reporting**: Results are sent back to Smart Tests
 
 ![PLACEHOLDER_GIF: Single iteration running in terminal]
 <!-- Add animated GIF showing one complete iteration from start to finish -->
@@ -301,7 +301,7 @@ Mutated function in: custom_op_47.py
 [master abc123d] next iteration 1
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-Launchable recorded build abc123d to workspace your-org/your-workspace...
+Smart Tests recorded build abc123d to workspace your-org/your-workspace...
 
 Smart Tests created subset <SUBSET_ID> for build abc123d (test session <SESSION_ID>)
 
@@ -322,7 +322,7 @@ Smart Tests created subset <SUBSET_ID> for build abc123d (test session <SESSION_
 <!-- Add screenshot of terminal showing completed first iteration with all key sections visible -->
 
 > [!TIP]
-> The first iteration may take slightly longer as Launchable processes your repository history.
+> The first iteration may take slightly longer as Smart Tests processes your repository history.
 > Subsequent iterations will be faster.
 
 Let's break down what just happened:
@@ -344,13 +344,13 @@ git show HEAD
 ```
 | Subset    |           21 |                    20.39 |                      21.00 |
 ```
-Launchable selected 21 tests (20% of 103 total). You can inspect the subset:
+Smart Tests selected 21 tests (20% of 103 total). You can inspect the subset:
 
 ```bash
-cat cicd/temp/launchable-subset.txt
+cat cicd/temp/subset.txt
 ```
 
-![PLACEHOLDER_SCREENSHOT: Content of cicd/temp/launchable-subset.txt]
+![PLACEHOLDER_SCREENSHOT: Content of cicd/temp/subset.txt]
 <!-- Add screenshot showing the list of selected tests -->
 
 #### Parallel Execution
@@ -358,7 +358,7 @@ The tests ran in parallel (`pytest -n auto`), significantly reducing execution t
 
 ### Step 7: Run Multiple Iterations
 
-Now let's run **5 iterations** to see Launchable learn from the accumulated data:
+Now let's run **5 iterations** to see Smart Tests learn from the accumulated data:
 
 ```bash
 ./cicd/pipeline.sh 5
@@ -384,7 +384,7 @@ As iterations progress, watch for:
    Mutated function in: custom_op_22.py
    ```
 
-2. **Varying subset sizes** (Launchable adjusts based on predicted risk)
+2. **Varying subset sizes** (Smart Tests adjusts based on predicted risk)
    ```
    Iteration 1: 21 tests selected
    Iteration 2: 19 tests selected (no mutation = fewer risky tests)
@@ -399,18 +399,18 @@ As iterations progress, watch for:
 ![PLACEHOLDER_SCREENSHOT: Multiple iterations completed with summary]
 <!-- Add screenshot showing completion of all 5 iterations -->
 
-### Step 8: Analyze Results in Launchable
+### Step 8: Analyze Results in Smart Tests
 
-After running multiple iterations, let's analyze the results in the Launchable web interface.
+After running multiple iterations, let's analyze the results in the Smart Tests web interface.
 
 #### Navigate to Your Workspace
 
-1. Visit [app.launchableinc.com](https://app.launchableinc.com)
+1. Visit [app.cloudbees.com/smart-tests](https://app.cloudbees.com/smart-tests)
 2. Select your organization and workspace
 3. Click on **Test Sessions** in the sidebar
 
-![PLACEHOLDER_SCREENSHOT: Launchable dashboard homepage]
-<!-- Add screenshot of Launchable dashboard showing navigation to Test Sessions -->
+![PLACEHOLDER_SCREENSHOT: Smart Tests dashboard homepage]
+<!-- Add screenshot of Smart Tests dashboard showing navigation to Test Sessions -->
 
 #### View Test Sessions
 
@@ -469,7 +469,7 @@ To see how subset selection evolved:
 
 ```bash
 # Get subset IDs from two different iterations
-launchable compare subsets --subset-id-before <SUBSET_ID_1> --subset-id-after <SUBSET_ID_2>
+smart-tests compare subsets --subset-id-before <SUBSET_ID_1> --subset-id-after <SUBSET_ID_2>
 ```
 
 ![PLACEHOLDER_SCREENSHOT: Subset comparison output]
@@ -477,10 +477,10 @@ launchable compare subsets --subset-id-before <SUBSET_ID_1> --subset-id-after <S
 
 #### Inspect Model Status
 
-Check when the Launchable ML model was last trained:
+Check when the Smart Tests ML model was last trained:
 
 ```bash
-launchable inspect model
+smart-tests inspect model
 ```
 
 Expected output:
@@ -493,7 +493,7 @@ Model status: Active
 ```
 
 ![PLACEHOLDER_SCREENSHOT: Model inspection output]
-<!-- Add screenshot of launchable inspect model command output -->
+<!-- Add screenshot of smart-tests inspect model command output -->
 
 ---
 
@@ -505,14 +505,14 @@ This project includes a pre-configured CloudBees workflow for automated CI/CD te
 
 #### Configure CloudBees Secret
 
-Before running the workflow, configure your Launchable API token as a secret:
+Before running the workflow, configure your Smart Tests API token as a secret:
 
 1. Navigate to your CloudBees organization
 2. Go to **Settings > Secrets**
 3. Click **New Secret**
 4. Create a secret with:
    - **Name**: `SMART_TESTS_KEY`
-   - **Value**: Your Launchable API token
+   - **Value**: Your Smart Tests API token
 
 ![PLACEHOLDER_SCREENSHOT: CloudBees secret creation page]
 <!-- Add screenshot of CloudBees UI showing the secret creation form with SMART_TESTS_KEY -->
@@ -522,7 +522,7 @@ Before running the workflow, configure your Launchable API token as a secret:
 The workflow is located at `.cloudbees/workflows/pipeline.yaml`. Let's review the key sections:
 
 ```yaml
-name: Random Test Pipeline with Launchable
+name: Random Test Pipeline with Smart Tests
 
 on:
   workflow_dispatch:
@@ -539,10 +539,10 @@ jobs:
       - name: Check out
         uses: cloudbees-io/checkout@v2
         with:
-          fetch-depth: 0  # Full git history for Launchable
+          fetch-depth: 0  # Full git history for Smart Tests
 
       - name: Run pipeline iterations
-        uses: docker://cloudbees/launchable:v1.120.0
+        uses: docker://cloudbees/smart-tests:v1.120.0
         env:
           LAUNCHABLE_TOKEN: ${{ secrets.SMART_TESTS_KEY }}
           ITERATIONS: ${{ inputs.iterations || '5' }}
@@ -576,14 +576,14 @@ Commit your local changes and push to trigger the workflow:
 
 ```bash
 git add .
-git commit -m "Configure Launchable demo"
+git commit -m "Configure Smart Tests demo"
 git push origin main
 ```
 
 #### Trigger the Workflow Manually
 
 1. Navigate to **CloudBees Platform > Workflows**
-2. Find **Random Test Pipeline with Launchable**
+2. Find **Random Test Pipeline with Smart Tests**
 3. Click **Run Workflow**
 4. In the dialog, set **iterations** (default: 5)
 5. Click **Run**
@@ -619,12 +619,12 @@ Click on the **Run pipeline iterations** step to see detailed logs:
 
 ```bash
 ========================================
-Running Launchable Pipeline
+Running Smart Tests Pipeline
 Iterations: 5
 ========================================
 
 Installing Python and dependencies...
-Successfully installed pytest-7.4.0 pytest-xdist-3.5.0 launchable-1.120.0
+Successfully installed pytest-7.4.0 pytest-xdist-3.5.0 smart-tests-cli-2.0
 
 🔁 Starting iteration 1
 Mutated function in: custom_op_23.py
@@ -644,22 +644,22 @@ Mutated function in: custom_op_23.py
 As tests complete, results are automatically archived. After the workflow finishes, you can:
 
 1. **Download test results** from the workflow artifacts
-2. **View results in Launchable** (links appear in logs)
+2. **View results in Smart Tests** (links appear in logs)
 
 ![PLACEHOLDER_SCREENSHOT: Workflow completed with artifacts]
 <!-- Add screenshot showing completed workflow with test result artifacts available -->
 
-#### View in Launchable Dashboard
+#### View in Smart Tests Dashboard
 
-The pipeline automatically reports all results to Launchable. Navigate to your workspace to see:
+The pipeline automatically reports all results to Smart Tests. Navigate to your workspace to see:
 
 - All 5 test sessions listed
 - Build information for each iteration
 - Subset performance metrics
 - Pass/fail trends
 
-![PLACEHOLDER_SCREENSHOT: Launchable dashboard showing all CI sessions]
-<!-- Add screenshot of Launchable showing multiple test sessions from the CloudBees pipeline -->
+![PLACEHOLDER_SCREENSHOT: Smart Tests dashboard showing all CI sessions]
+<!-- Add screenshot of Smart Tests showing multiple test sessions from the CloudBees pipeline -->
 
 ---
 
@@ -690,11 +690,11 @@ def custom_op_47(a, b):
 ![PLACEHOLDER_SCREENSHOT: Side-by-side comparison of original vs mutated code]
 <!-- Add screenshot showing git diff with clear before/after of a mutation -->
 
-This simulates the types of small, localized changes developers make daily. Launchable learns which tests are sensitive to changes in specific files.
+This simulates the types of small, localized changes developers make daily. Smart Tests learns which tests are sensitive to changes in specific files.
 
-### How Launchable Selects Tests
+### How Smart Tests Selects Tests
 
-Launchable's ML model analyzes multiple signals:
+Smart Tests's ML model analyzes multiple signals:
 
 1. **File changes**: Which source files were modified in this commit
 2. **Historical correlations**: Past data showing "when file X changed, test Y failed"
@@ -703,7 +703,7 @@ Launchable's ML model analyzes multiple signals:
 
 **The result:** A prioritized, ranked list of tests where the most relevant tests appear first.
 
-![PLACEHOLDER_DIAGRAM: Flowchart showing Launchable's decision process]
+![PLACEHOLDER_DIAGRAM: Flowchart showing Smart Tests's decision process]
 <!-- Add diagram showing: Code Change → File Analysis → Historical Data → ML Model → Ranked Test List → Subset (top 20%) -->
 
 ### Why Test Execution is Fast
@@ -778,14 +778,14 @@ Over iterations, the model's prediction accuracy improves:
 ✅ **Most iterations pass** (mutations are small and localized)
 ✅ **Some failures** (expected when mutations break logic)
 
-#### In the Launchable Dashboard
+#### In the Smart Tests Dashboard
 
 ✅ **Time savings trending upward** as model improves
 ✅ **Subset accuracy** consistently high (90%+)
 ✅ **No critical failures missed** (low false negative rate)
 ✅ **Model training progress** visible in model inspection
 
-![PLACEHOLDER_SCREENSHOT: Launchable dashboard summary view]
+![PLACEHOLDER_SCREENSHOT: Smart Tests dashboard summary view]
 <!-- Add screenshot showing key metrics dashboard with trends over time -->
 
 ---
@@ -794,24 +794,24 @@ Over iterations, the model's prediction accuracy improves:
 
 ### Running a Custom Test Subset
 
-You can manually interact with Launchable to generate custom subsets:
+You can manually interact with Smart Tests to generate custom subsets:
 
 ```bash
 # 1. Record a build
-launchable record build --name my-custom-build
+smart-tests record build --name my-custom-build
 
 # 2. Create test session
-launchable record session --test-suite "random_pytest" --build my-custom-build > session.txt
+smart-tests record session --test-suite "random_pytest" --build my-custom-build > session.txt
 
 # 3. Generate subset with different target (e.g., 30%)
 mkdir -p cicd/temp
-cat test/test_list.txt | launchable subset --build my-custom-build --target 30% pytest > cicd/temp/my-subset.txt
+cat test/test_list.txt | smart-tests subset --build my-custom-build --target 30% pytest > cicd/temp/my-subset.txt
 
 # 4. Run the subset
 pytest -n auto @cicd/temp/my-subset.txt --junit-xml=cicd/temp/test-results/results.xml
 
 # 5. Report results
-launchable record tests --session $(cat session.txt) pytest cicd/temp/test-results/
+smart-tests record tests --session $(cat session.txt) pytest cicd/temp/test-results/
 ```
 
 ### Adjusting the Target Percentage
@@ -820,7 +820,7 @@ Edit `cicd/pipeline.sh` line 40 to change the subset size:
 
 ```bash
 # Change from 20% to 30%
-cat test/test_list.txt | launchable subset --build $NAME --target 30% pytest > cicd/temp/launchable-subset.txt
+cat test/test_list.txt | smart-tests subset --build $NAME --target 30% pytest > cicd/temp/subset.txt
 ```
 
 ### Running Tests Sequentially (for Debugging)
@@ -829,7 +829,7 @@ If you need to debug individual test failures, run without parallelization:
 
 ```bash
 # Edit cicd/pipeline.sh line 30, remove -n auto
-pytest --junit-xml=test-results/subset.xml @launchable-subset.txt
+pytest --junit-xml=test-results/subset.xml @subset.txt
 ```
 
 ### Reducing Test Sleep Time (Faster Demo)
@@ -862,8 +862,8 @@ This project has been carefully organized to follow best practices for Python pr
 All temporary files generated during the pipeline are stored in `cicd/temp/`:
 ```
 cicd/temp/
-├── launchable-session.txt    # Current test session
-├── launchable-subset.txt     # Selected 20% test subset
+├── session.txt    # Current test session
+├── subset.txt     # Selected 20% test subset
 └── test-results/             # JUnit XML output
     └── subset.xml
 ```
@@ -915,7 +915,7 @@ All code, documentation, and workflows have been updated to reflect this new str
 
 ### Common Issues
 
-#### Issue: `launchable: command not found`
+#### Issue: `smart-tests: command not found`
 
 **Solution:** Activate your virtual environment
 
@@ -925,8 +925,8 @@ source venv/bin/activate
 
 Verify:
 ```bash
-which launchable
-# Should show: /path/to/random_tests/venv/bin/launchable
+which smart-tests
+# Should show: /path/to/random_tests/venv/bin/smart-tests
 ```
 
 ---
@@ -947,7 +947,7 @@ chmod +x cicd/pipeline.sh
 
 Check that `cicd/pipeline.sh` line 41 includes `-n auto`:
 ```bash
-pytest -n auto --junit-xml=cicd/temp/test-results/subset.xml @cicd/temp/launchable-subset.txt
+pytest -n auto --junit-xml=cicd/temp/test-results/subset.xml @cicd/temp/subset.txt
 ```
 
 Verify pytest-xdist is installed:
@@ -959,7 +959,7 @@ pip list | grep pytest-xdist
 
 #### Issue: No subset generated on first run
 
-**Expected behavior.** The first run establishes a baseline. Launchable needs at least one test session with results before it can make predictions.
+**Expected behavior.** The first run establishes a baseline. Smart Tests needs at least one test session with results before it can make predictions.
 
 After the first iteration completes, subsequent iterations will use ML-based predictions.
 
@@ -988,16 +988,16 @@ echo $LAUNCHABLE_TOKEN
 **Solution:** Check the secret configuration
 
 1. Verify `SMART_TESTS_KEY` secret exists in CloudBees
-2. Ensure the secret value is your Launchable API token (not some other credential)
+2. Ensure the secret value is your Smart Tests API token (not some other credential)
 3. Check workflow logs for the exact error message
 
 ---
 
 ## Reference Materials
 
-- [Launchable Documentation](https://docs.launchableinc.com/)
+- [Smart Tests Documentation](https://docs.cloudbees.com/docs/cloudbees-smart-tests/)
 - [CloudBees Smart Tests Documentation](https://docs.cloudbees.com/docs/cloudbees-smart-tests/latest/)
-- [Predictive Test Selection Concepts](https://docs.launchableinc.com/docs/concepts/predictive-test-selection)
+- [Predictive Test Selection Concepts](https://docs.cloudbees.com/docs/cloudbees-smart-tests/docs/concepts/predictive-test-selection)
 - [pytest-xdist Documentation](https://pytest-xdist.readthedocs.io/)
 - [CLAUDE.md](CLAUDE.md) - Developer guide for working with this codebase
 
@@ -1005,11 +1005,11 @@ echo $LAUNCHABLE_TOKEN
 
 ## Summary
 
-Congratulations! You've successfully completed the Launchable Predictive Test Selection demo. 🎉
+Congratulations! You've successfully completed the Smart Tests Predictive Test Selection demo. 🎉
 
 **What you accomplished:**
 
-✅ Set up a complete Launchable PTS environment
+✅ Set up a complete Smart Tests PTS environment
 ✅ Understood a clean, well-organized project structure following Python best practices
 ✅ Ran automated mutation testing with intelligent test selection
 ✅ Observed ML-driven test optimization in action
@@ -1029,19 +1029,19 @@ Congratulations! You've successfully completed the Launchable Predictive Test Se
 
 Ready to apply this to your own projects?
 
-1. **Explore your own repository:** Clone a real project and try Launchable on it
+1. **Explore your own repository:** Clone a real project and try Smart Tests on it
 2. **Experiment with different targets:** Test 10%, 20%, 30% subsets to find your optimal balance
 3. **Integrate with your CI/CD:** Adapt the CloudBees workflow to your existing pipelines
-4. **Review the documentation:** Check out [Launchable docs](https://docs.launchableinc.com/) for advanced features
+4. **Review the documentation:** Check out [Smart Tests docs](https://docs.cloudbees.com/docs/cloudbees-smart-tests/) for advanced features
 
 ### Live Walkthrough Tips
 
 If you're using this demo for a presentation or workshop:
 
 1. Run `./cicd/pipeline.sh 5` and narrate what's happening
-2. Open `cicd/temp/launchable-subset.txt` and show it's ~20% of tests
+2. Open `cicd/temp/subset.txt` and show it's ~20% of tests
 3. Point out which files mutated and which tests were selected
-4. Show a test failure and explain how Launchable learns from it
+4. Show a test failure and explain how Smart Tests learns from it
 5. Compare iteration 1 vs iteration 5 subset quality
 
 ---
@@ -1050,8 +1050,8 @@ If you're using this demo for a presentation or workshop:
 
 - Open an issue in this repository
 - Contact your workshop instructor
-- Visit [Launchable Community](https://launchableinc.com/community)
+- Visit [Smart Tests Community](https://cloudbees.com/community)
 
 ---
 
-*This demo is maintained as part of Launchable's educational resources. For the latest updates, visit the [Launchable documentation](https://docs.launchableinc.com/).*
+*This demo is maintained as part of Smart Tests's educational resources. For the latest updates, visit the [Smart Tests documentation](https://docs.cloudbees.com/docs/cloudbees-smart-tests/).*
