@@ -35,15 +35,15 @@ for ((i = 1; i <= ITERATIONS; i++)); do
   NAME=$(git rev-parse --short HEAD)
 
   # Smart Tests tracking
-  smart-tests record build --name $NAME
+  smart-tests record build --build $NAME
   smart-tests record session --test-suite "random_pytest" --observation --build $NAME > cicd/temp/session.txt
 
   # Subset and test
-  cat test/test_list.txt | smart-tests subset --build $NAME --target 20% pytest > cicd/temp/subset.txt
+  cat test/test_list.txt | smart-tests subset  --session $(cat cicd/temp/session.txt) --target 20% pytest > cicd/temp/subset.txt
   pytest -n 50 -o junit_family=legacy --junit-xml=cicd/temp/test-results/subset.xml @cicd/temp/subset.txt
 
   # Report to Smart Tests
-  smart-tests record tests --session $(cat cicd/temp/session.txt) --allow-test-before-build --build $NAME pytest cicd/temp/test-results/
+  smart-tests record tests --session $(cat cicd/temp/session.txt) --allow-test-before-build --session $(cat cicd/temp/session.txt) pytest cicd/temp/test-results/
 
   echo "✅ Completed iteration $i"
   echo
