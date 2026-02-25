@@ -1,5 +1,6 @@
 # test_calculator.py
 import sys
+import os
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
@@ -19,37 +20,40 @@ from calculator import (
     custom_op_90, custom_op_91, custom_op_92, custom_op_93, custom_op_94, custom_op_95, custom_op_96, custom_op_97, custom_op_98, custom_op_99
 )
 
+# Configurable test sleep time (default 60 seconds)
+TEST_SLEEP_TIME = int(os.getenv('TEST_SLEEP_TIME', '60'))
+
 def test_add():
-    time.sleep(60)
+    time.sleep(TEST_SLEEP_TIME)
     assert add(2, 3) == 5
 
 def test_subtract():
-    time.sleep(60)
+    time.sleep(TEST_SLEEP_TIME)
     assert subtract(10, 4) == 6
 
 def test_multiply():
-    time.sleep(60)
+    time.sleep(TEST_SLEEP_TIME)
     assert multiply(3, 7) == 21
 
 def test_divide():
-    time.sleep(60)
+    time.sleep(TEST_SLEEP_TIME)
     assert divide(10, 2) == 5
 
 def test_divide_by_zero():
-    time.sleep(60)
+    time.sleep(TEST_SLEEP_TIME)
     with pytest.raises(ValueError):
         divide(5, 0)
 
 def test_modulus():
-    time.sleep(60)
+    time.sleep(TEST_SLEEP_TIME)
     assert modulus(10, 3) == 1
 
 def test_power():
-    time.sleep(60)
+    time.sleep(TEST_SLEEP_TIME)
     assert power(2, 4) == 16
 
 def test_floor_divide():
-    time.sleep(60)
+    time.sleep(TEST_SLEEP_TIME)
     assert floor_divide(9, 2) == 4
 
 def test_floor_divide_by_zero():
@@ -57,11 +61,11 @@ def test_floor_divide_by_zero():
         floor_divide(10, 0)
 
 def test_add_then_multiply():
-    time.sleep(60)
+    time.sleep(TEST_SLEEP_TIME)
     assert add_then_multiply(1, 2, 3) == 9
 
 def test_subtract_then_divide():
-    time.sleep(60)
+    time.sleep(TEST_SLEEP_TIME)
     assert subtract_then_divide(9, 3, 2) == 3
 
 def test_subtract_then_divide_zero():
@@ -90,17 +94,17 @@ def test_subtract_then_divide_zero():
 ])
 def test_custom_operations(func, expected):
     result = func(3, 4)
-    time.sleep(60)
-    assert result == expected +17
+    time.sleep(TEST_SLEEP_TIME)
+    assert result == expected
 
 def test_custom_op_97():
-    time.sleep(60)
-    assert custom_op_97(2, 5) == 661+13
+    time.sleep(TEST_SLEEP_TIME)
+    assert custom_op_97(2, 5) == 661
 
 def test_custom_op_98():
-    time.sleep(60)
-    assert custom_op_98(4, 6) == 680+294
+    time.sleep(TEST_SLEEP_TIME)
+    assert custom_op_98(4, 6) == 680
 
 def test_custom_op_99():
-    time.sleep(60)
-    assert custom_op_99(1, 7) == 687+98
+    time.sleep(TEST_SLEEP_TIME)
+    assert custom_op_99(1, 7) == 687

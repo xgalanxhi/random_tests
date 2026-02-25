@@ -27,8 +27,8 @@ for ((i = 1; i <= ITERATIONS; i++)); do
   # Mutate randomly
   python cicd/mutate_random_function.py
 
-  # Git commit
-  git add src/calculator test/test_calculator.py
+  # Git commit (only commit mutated calculator source, not tests)
+  git add src/calculator
   git commit -m "next iteration $i"
 
   # Get commit hash
