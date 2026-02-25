@@ -13,7 +13,7 @@ function_files = [f for f in os.listdir(base_dir)
 # Decide how many files to mutate
 roll = random.random()
 
-if roll < 0.5:
+if roll < -0.5:
     print("No mutation this time.")
     exit(0)
 elif roll < 0.8:
