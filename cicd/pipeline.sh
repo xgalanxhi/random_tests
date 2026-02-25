@@ -15,7 +15,7 @@ for ((i = 1; i <= ITERATIONS; i++)); do
   echo "🔁 Starting iteration $i"
 
   # Reset working directory at the start
-  if [ $i -gt 1 ]; then
+  if [ $i -gt 0 ]; then
     echo "Resetting to clean state..."
     rm -rf src/calculator
     cp -r backup/calculator/ src/calculator
