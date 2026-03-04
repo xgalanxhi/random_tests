@@ -7,7 +7,7 @@ Welcome to the Smart Tests Predictive Test Selection (PTS) demonstration lab! Th
 This project simulates a real-world testing scenario where:
 - A Python calculator application has **103 tests** that each take **60 seconds** to run (total: ~103 minutes)
 - Code mutations are introduced randomly to simulate development changes
-- Smart Tests's ML model predicts which tests are affected and selects only **20% of the test suite**
+- Smart Tests uses LLM-based code analysis to predict which tests are affected and selects only **20% of the test suite**
 - Tests run in parallel using pytest-xdist for maximum efficiency
 - Results are tracked across multiple iterations to show learning improvements
 
@@ -80,12 +80,47 @@ Before starting this lab, ensure you have:
    ```
 
 3. A **Smart Tests account** with API token access
-   - Sign up at [app.cloudbees.com/smart-tests](https://app.cloudbees.com/smart-tests) if you don't have one yet
+   - Sign up at [cloudbees.io](https://cloudbees.io) if you don't have one yet
 
 4. (Optional) **CloudBees platform access** for CI/CD integration
 
+5. **Operating System**: Linux or macOS recommended. Windows users should use
+   WSL or Git Bash — `pipeline.sh` requires a bash shell. Parallel test
+   execution (`pytest -n auto`) uses all available CPU cores.
+
+6. **Network Access**: The Smart Tests CLI communicates with the SaaS backend.
+   Ensure outbound HTTPS access to `*.launchableinc.com` and `*.cloudbees.io`.
+   See [Running under restricted networks](https://docs.cloudbees.com/docs/cloudbees-smart-tests/latest/sending-data-to-smart-tests/recording-builds/running-under-restricted-networks)
+   for proxy configurations.
+
 > [!NOTE]
 > This demo makes git commits during execution. It's recommended to run it in a demo branch or disposable clone.
+
+> **PTS Requirements** (from the
+> [onboarding guide](https://docs.cloudbees.com/docs/cloudbees-smart-tests/latest/resources/onboarding-guide)):
+>
+> - Tests must report **binary pass/fail** results (performance/metric-only tests are not supported)
+> - Tests must have **no inter-test dependencies** — PTS re-orders tests by priority
+> - Test framework must support **test-to-file mapping** (mapping a test back to its source file)
+> - Test results must be in **JUnit XML format** (see [tools/README.md](tools/README.md) for a validator)
+> - Your team must be able to **edit CI scripts** to add Smart Tests CLI commands
+> - The CLI requires **outbound HTTPS** access to the Smart Tests SaaS backend
+
+### Supported Test Frameworks
+
+This demo uses **pytest**, but Smart Tests supports 20+ test runners natively:
+
+Android Debug Bridge (adb), Ant, Bazel, Behave, CTest, Cucumber, Cypress,
+dotnet test, Go Test, GoogleTest, Gradle, Jest, Karma, Maven, minitest,
+Playwright, prove (Perl), **pytest**, Robot, and RSpec.
+
+For other frameworks, use the `file` or `raw` CLI profiles with
+[JUnit XML](https://github.com/testmoapp/junitxml) output.
+A [validator script](tools/README.md) is included in this repo to check your
+XML reports before sending them to Smart Tests.
+
+See the full [Integrations list](https://docs.cloudbees.com/docs/cloudbees-smart-tests/latest/integrations/)
+in the Smart Tests docs.
 
 ### Step 2: Clone the Repository
 
@@ -96,8 +131,6 @@ git clone <YOUR_REPO_URL>
 cd random_tests
 ```
 
-![PLACEHOLDER_SCREENSHOT: Terminal showing successful git clone]
-<!-- Add screenshot showing the git clone command and successful output -->
 
 ### Step 3: Set Up Python Environment
 
@@ -114,6 +147,18 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+The key dependencies installed are:
+
+- `smart-tests-cli~=2.0` — Smart Tests CLI for predictive test selection
+- `pytest` — Python test framework
+- `pytest-xdist` — Parallel test execution (`-n auto`)
+
+You can also install the CLI standalone via [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv tool install smart-tests-cli~=2.0
+```
+
 Verify the installation was successful:
 
 ```bash
@@ -124,12 +169,10 @@ smart-tests --version
 Expected output:
 
 ```
-pytest 7.4.0
-smart-tests, version 2.0
+pytest 8.x.x
+smart-tests version: '2.2.0'
 ```
 
-![PLACEHOLDER_SCREENSHOT: Terminal showing successful package installation]
-<!-- Add screenshot showing pip install completion and version checks -->
 
 > [!TIP]
 > If `smart-tests` is not found on your PATH:
@@ -147,30 +190,26 @@ smart-tests, version 2.0
 
 #### Obtain Your API Token
 
-1. Log in to your Smart Tests workspace at [app.cloudbees.com/smart-tests](https://app.cloudbees.com/smart-tests)
+1. Log in to your Smart Tests workspace at [cloudbees.io](https://cloudbees.io)
 2. Navigate to **Settings > API Tokens**
 3. Click **Generate New Token** or **Copy** an existing token
 
-![PLACEHOLDER_SCREENSHOT: Smart Tests API token page]
-<!-- Add screenshot of the Smart Tests workspace showing Settings > API Tokens -->
 
 <br>
 
-![PLACEHOLDER_SCREENSHOT: Copy token button highlighted]
-<!-- Add screenshot highlighting the "Copy" button for the API token -->
 
 #### Set Environment Variable
 
 Export your API token as an environment variable:
 
 ```bash
-export LAUNCHABLE_TOKEN="<your-api-token>"
+export SMART_TESTS_TOKEN="<your-api-token>"
 ```
 
 Or create a local `.env` file (gitignored):
 
 ```bash
-echo 'export LAUNCHABLE_TOKEN="<your-api-token>"' > .env
+echo 'export SMART_TESTS_TOKEN="<your-api-token>"' > .env
 source .env
 ```
 
@@ -191,13 +230,11 @@ If successful, you should see output similar to:
 Organization: 'your-organization'
 Workspace: 'your-workspace'
 Platform: 'Darwin-25.3.0-arm64-arm-64bit'
-Python version: '3.11.5'
-smart-tests version: '1.120.0'
+Python version: '3.13.x'
+smart-tests version: '2.2.0'
 Your CLI configuration is successfully verified 🎉
 ```
 
-![PLACEHOLDER_SCREENSHOT: Successful smart-tests verify output]
-<!-- Add screenshot showing the successful verification message -->
 
 ___
 
@@ -264,8 +301,6 @@ This project was refactored to follow Python best practices and CI/CD convention
 - Easy to navigate and understand
 - Follows Python project conventions
 
-![PLACEHOLDER_DIAGRAM: Project architecture flowchart]
-<!-- Add diagram showing: Reset → Code Mutation → Git Commit → Smart Tests Build → Test Subset → Test Execution → Results → Clean Temp -->
 
 ### Step 6: Run Your First Iteration
 
@@ -288,8 +323,6 @@ Let's run a single iteration to see how the system works:
 8. ▶️ **Test Execution**: Selected tests run in parallel with pytest-xdist
 9. 📊 **Result Reporting**: Results are sent back to Smart Tests
 
-![PLACEHOLDER_GIF: Single iteration running in terminal]
-<!-- Add animated GIF showing one complete iteration from start to finish -->
 
 You should see output like:
 
@@ -318,8 +351,6 @@ Smart Tests created subset <SUBSET_ID> for build abc123d (test session <SESSION_
 ✅ Completed iteration 1
 ```
 
-![PLACEHOLDER_SCREENSHOT: First iteration complete output]
-<!-- Add screenshot of terminal showing completed first iteration with all key sections visible -->
 
 > [!TIP]
 > The first iteration may take slightly longer as Smart Tests processes your repository history.
@@ -337,8 +368,6 @@ This tells you which file was changed. You can check the mutation by running:
 git show HEAD
 ```
 
-![PLACEHOLDER_SCREENSHOT: Git diff showing mutation]
-<!-- Add screenshot of git show HEAD output showing the mutated line -->
 
 #### Subset Selection
 ```
@@ -350,11 +379,37 @@ Smart Tests selected 21 tests (20% of 103 total). You can inspect the subset:
 cat cicd/temp/subset.txt
 ```
 
-![PLACEHOLDER_SCREENSHOT: Content of cicd/temp/subset.txt]
-<!-- Add screenshot showing the list of selected tests -->
 
 #### Parallel Execution
 The tests ran in parallel (`pytest -n auto`), significantly reducing execution time from 21 minutes to ~2-3 minutes on a multi-core machine.
+
+#### Going Live
+
+The pipeline runs in **observation mode** (`--observation` flag on
+`smart-tests record session`). In this mode, Smart Tests tracks what
+the subset *would have* selected but still runs all tests — letting you
+evaluate prediction quality without risk.
+
+When you're confident in the predictions (the official onboarding guide
+recommends 1–2 weeks of data), remove the flag:
+
+```diff
+- smart-tests record session --build $NAME --observation --test-suite ...
++ smart-tests record session --build $NAME --test-suite ...
+```
+
+Start with a conservative target (e.g. `--target 80%` or `--confidence 95%`)
+and adjust based on observed results.
+
+> **Always report results, even on failure.** Smart Tests needs to see both
+> passing and failing test runs to make accurate predictions.
+>
+> | CI System | Pattern |
+> |-----------|---------|
+> | GitHub Actions | `if: always()` on the record tests step |
+> | Jenkins | `post { always { } }` block |
+> | CloudBees Workflows | `if: always()` |
+> | Shell scripts | Capture exit code: `pytest ... || TEST_EXIT=$?` then report, then `exit ${TEST_EXIT:-0}` |
 
 ### Step 7: Run Multiple Iterations
 
@@ -366,8 +421,6 @@ Now let's run **5 iterations** to see Smart Tests learn from the accumulated dat
 
 This will take approximately 10-15 minutes total (depending on your CPU cores).
 
-![PLACEHOLDER_GIF: Multiple iterations running with progress indicators]
-<!-- Add GIF showing multiple iterations in sequence, highlighting the iteration count -->
 
 As iterations progress, watch for:
 
@@ -396,8 +449,6 @@ As iterations progress, watch for:
    ====================== 2 passed, 1 failed in 125.34s ======================
    ```
 
-![PLACEHOLDER_SCREENSHOT: Multiple iterations completed with summary]
-<!-- Add screenshot showing completion of all 5 iterations -->
 
 ### Step 8: Analyze Results in Smart Tests
 
@@ -405,19 +456,15 @@ After running multiple iterations, let's analyze the results in the Smart Tests 
 
 #### Navigate to Your Workspace
 
-1. Visit [app.cloudbees.com/smart-tests](https://app.cloudbees.com/smart-tests)
+1. Visit [cloudbees.io](https://cloudbees.io) and navigate to Smart Tests
 2. Select your organization and workspace
 3. Click on **Test Sessions** in the sidebar
 
-![PLACEHOLDER_SCREENSHOT: Smart Tests dashboard homepage]
-<!-- Add screenshot of Smart Tests dashboard showing navigation to Test Sessions -->
 
 #### View Test Sessions
 
 You should see a list of test sessions corresponding to your pipeline runs:
 
-![PLACEHOLDER_SCREENSHOT: Test sessions list view]
-<!-- Add screenshot showing the list of test sessions with build names, dates, and status -->
 
 Each session shows:
 - **Build name** (git commit hash)
@@ -430,13 +477,10 @@ Each session shows:
 
 Click on one of the sessions to see detailed information:
 
-![PLACEHOLDER_SCREENSHOT: Session detail page with subset breakdown]
-<!-- Add screenshot of session details showing:
   - Subset composition
   - Which tests passed/failed
   - Time savings metrics
   - Subset accuracy
--->
 
 **Key metrics to observe:**
 
@@ -447,19 +491,14 @@ Click on one of the sessions to see detailed information:
 | **Tests Run** | 21 / 103 |
 | **Execution Time** | ~2-3 min vs. ~103 min full suite |
 
-![PLACEHOLDER_SCREENSHOT: Time savings visualization graph]
-<!-- Add screenshot showing time comparison: Full Suite vs. Subset -->
 
 #### View Subset Observation Report
 
 Since the pipeline uses `--observation` mode, you'll see a subset observation report:
 
-![PLACEHOLDER_SCREENSHOT: Subset observation report]
-<!-- Add screenshot showing:
   - Subset quality metrics
   - How many tests would have been skipped
   - Whether any failures were in the remainder
--->
 
 This helps you evaluate subset quality before fully enabling PTS.
 
@@ -472,28 +511,6 @@ To see how subset selection evolved:
 smart-tests compare subsets --subset-id-before <SUBSET_ID_1> --subset-id-after <SUBSET_ID_2>
 ```
 
-![PLACEHOLDER_SCREENSHOT: Subset comparison output]
-<!-- Add screenshot showing side-by-side comparison of two subsets with rank differences highlighted -->
-
-#### Inspect Model Status
-
-Check when the Smart Tests ML model was last trained:
-
-```bash
-smart-tests inspect model
-```
-
-Expected output:
-
-```
-Test suite: random_pytest
-Model trained at: 2026-02-24 10:45:32 UTC
-Training data: 5 sessions, 515 test results
-Model status: Active
-```
-
-![PLACEHOLDER_SCREENSHOT: Model inspection output]
-<!-- Add screenshot of smart-tests inspect model command output -->
 
 ---
 
@@ -513,9 +530,8 @@ Before running the workflow, configure your Smart Tests API token as a secret:
 4. Create a secret with:
    - **Name**: `SMART_TESTS_KEY`
    - **Value**: Your Smart Tests API token
+      (found in your workspace at **Settings > API Tokens**)
 
-![PLACEHOLDER_SCREENSHOT: CloudBees secret creation page]
-<!-- Add screenshot of CloudBees UI showing the secret creation form with SMART_TESTS_KEY -->
 
 #### Review the Workflow Configuration
 
@@ -542,9 +558,11 @@ jobs:
           fetch-depth: 0  # Full git history for Smart Tests
 
       - name: Run pipeline iterations
-        uses: docker://cloudbees/smart-tests:v1.120.0
+        uses: docker://python:3.11-slim
         env:
-          LAUNCHABLE_TOKEN: ${{ secrets.SMART_TESTS_KEY }}
+          SMART_TESTS_TOKEN: ${{ secrets.SMART_TESTS_KEY }}
+          SMART_TESTS_ORGANIZATION: ${{ vars.SMART_TESTS_ORG || '' }}
+          SMART_TESTS_WORKSPACE: ${{ vars.SMART_TESTS_WS || '' }}
           ITERATIONS: ${{ inputs.iterations || '5' }}
         run: |
           # Install Python and dependencies
@@ -560,15 +578,18 @@ jobs:
 ```
 
 The workflow:
-- ✅ Uses the `cloudbees/launchable` container (has git + can install Python)
+- ✅ Uses Python 3.11 container with git pre-installed
 - ✅ Fetches full repository history for accurate predictions
 - ✅ Installs dependencies from `requirements.txt`
 - ✅ Configures git for commits during pipeline execution
 - ✅ Runs `cicd/pipeline.sh` with configurable iteration count
 - ✅ Archives JUnit XML test results
 
-![PLACEHOLDER_SCREENSHOT: Workflow YAML file in editor]
-<!-- Add screenshot of the workflow file open in editor with key sections highlighted -->
+> **Why `fetch-depth: 0`?** Smart Tests needs full Git history to analyze code
+> changes across commits. CI systems default to shallow clones (depth 1), which
+> limits Smart Tests to only the latest commit. In Jenkins, ensure your SCM
+> checkout is not configured for shallow clones. See
+> [Dealing with shallow clones](https://docs.cloudbees.com/docs/cloudbees-smart-tests/latest/sending-data-to-smart-tests/recording-builds/dealing-with-shallow-clones).
 
 #### Push to Repository
 
@@ -588,8 +609,6 @@ git push origin main
 4. In the dialog, set **iterations** (default: 5)
 5. Click **Run**
 
-![PLACEHOLDER_SCREENSHOT: CloudBees workflow dispatch UI]
-<!-- Add screenshot showing the workflow dispatch dialog with iteration input field -->
 
 ### Step 10: Monitor Pipeline Execution
 
@@ -599,8 +618,6 @@ Once the workflow starts, monitor its progress in real-time.
 
 Navigate to the workflow run page to see the execution status:
 
-![PLACEHOLDER_SCREENSHOT: CloudBees pipeline running view]
-<!-- Add screenshot of the CloudBees UI showing the running pipeline with progress indicators -->
 
 The workflow progresses through these stages:
 
@@ -610,8 +627,6 @@ The workflow progresses through these stages:
    - Configuring git
    - Running iterations
 
-![PLACEHOLDER_SCREENSHOT: Pipeline execution stages expanded]
-<!-- Add screenshot showing the expanded view of all pipeline stages -->
 
 #### View Pipeline Logs
 
@@ -636,8 +651,6 @@ Mutated function in: custom_op_23.py
 ...
 ```
 
-![PLACEHOLDER_GIF: Pipeline logs scrolling with iterations completing]
-<!-- Add GIF showing the live log output with iterations progressing -->
 
 #### Monitor Test Results
 
@@ -646,8 +659,6 @@ As tests complete, results are automatically archived. After the workflow finish
 1. **Download test results** from the workflow artifacts
 2. **View results in Smart Tests** (links appear in logs)
 
-![PLACEHOLDER_SCREENSHOT: Workflow completed with artifacts]
-<!-- Add screenshot showing completed workflow with test result artifacts available -->
 
 #### View in Smart Tests Dashboard
 
@@ -658,8 +669,65 @@ The pipeline automatically reports all results to Smart Tests. Navigate to your 
 - Subset performance metrics
 - Pass/fail trends
 
-![PLACEHOLDER_SCREENSHOT: Smart Tests dashboard showing all CI sessions]
-<!-- Add screenshot of Smart Tests showing multiple test sessions from the CloudBees pipeline -->
+
+### Jenkins Integration
+
+Smart Tests integrates with Jenkins in two ways:
+
+**Option A: Jenkins Plugin (Recommended)**
+
+Install the [Smart Tests Jenkins plugin](https://docs.cloudbees.com/docs/cloudbees-smart-tests/)
+to automatically forward test results to Smart Tests via Jenkins' `junit` step.
+No CLI commands needed in your Jenkinsfile — the plugin intercepts results
+Jenkins is already collecting.
+
+After installing the `.hpi` file, configure the API token in
+**Manage Jenkins → System Configuration**.
+
+**Option B: CLI Commands in Jenkinsfile**
+
+```groovy
+pipeline {
+    agent any
+    environment {
+        SMART_TESTS_TOKEN = credentials('smart-tests-token')
+    }
+    stages {
+        stage('Setup') {
+            steps {
+                sh 'pip install smart-tests-cli~=2.0'
+                sh 'smart-tests verify'
+            }
+        }
+        stage('Record Build') {
+            steps {
+                sh "smart-tests record build --build ${env.BUILD_NUMBER}"
+            }
+        }
+        stage('Subset & Test') {
+            steps {
+                sh '''
+                    smart-tests record session --build ${BUILD_NUMBER} \
+                        --test-suite my-suite > session.txt
+                    smart-tests subset pytest --session @session.txt \
+                        --target 20% test/test_list.txt > subset.txt
+                    pytest -n auto --junit-xml=test-results/results.xml @subset.txt
+                '''
+            }
+            post {
+                always {
+                    sh 'smart-tests record tests pytest --session @session.txt test-results/'
+                    junit 'test-results/*.xml'
+                }
+            }
+        }
+    }
+}
+```
+
+**Important:** Use `post { always { } }` so test results are reported to
+Smart Tests even when tests fail. Without this, failures never reach
+Smart Tests and predictions cannot improve.
 
 ---
 
@@ -687,24 +755,24 @@ def custom_op_47(a, b):
 +   return (a - b) * c - (b % (c if c != 0 else 1))
 ```
 
-![PLACEHOLDER_SCREENSHOT: Side-by-side comparison of original vs mutated code]
-<!-- Add screenshot showing git diff with clear before/after of a mutation -->
 
 This simulates the types of small, localized changes developers make daily. Smart Tests learns which tests are sensitive to changes in specific files.
 
 ### How Smart Tests Selects Tests
 
-Smart Tests's ML model analyzes multiple signals:
+Smart Tests uses large language models (LLMs) to understand your code changes
+and automatically identify the most relevant tests to run. By analyzing both
+source code and test files, Smart Tests builds a deep understanding of how your
+code is structured and how different components relate to one another.
 
-1. **File changes**: Which source files were modified in this commit
-2. **Historical correlations**: Past data showing "when file X changed, test Y failed"
-3. **Code structure**: Understanding of imports, dependencies, and call graphs
-4. **Test metadata**: Test duration, failure rates, flakiness patterns
+Using commit information, it calculates the similarity between changed files
+and test files to determine which tests are most likely impacted — producing
+an optimized test execution plan where critical tests are prioritized and
+redundant ones are safely skipped.
 
-**The result:** A prioritized, ranked list of tests where the most relevant tests appear first.
+**The result:** A prioritized, ranked list of tests where the most relevant
+tests appear first.
 
-![PLACEHOLDER_DIAGRAM: Flowchart showing Smart Tests's decision process]
-<!-- Add diagram showing: Code Change → File Analysis → Historical Data → ML Model → Ranked Test List → Subset (top 20%) -->
 
 ### Why Test Execution is Fast
 
@@ -722,8 +790,6 @@ Tests run with `pytest -n auto`, which:
 
 **Combined savings:** From 103 min → 3 min = **~97% time reduction**
 
-![PLACEHOLDER_DIAGRAM: Visual showing parallel test distribution]
-<!-- Add diagram showing tests distributed across 8 worker threads -->
 
 ### Typical Results After 5-10 Iterations
 
@@ -740,34 +806,36 @@ After running multiple iterations, you'll observe:
 | **Subset Accuracy** | 90-95%+ |
 | **False Negatives** | <5% (missed failures) |
 
-![PLACEHOLDER_CHART: Bar chart comparing execution times]
-<!-- Add bar chart showing:
   - Full Suite Sequential: 103 min
   - Full Suite Parallel: 13 min
   - Subset Parallel: 3 min
--->
 
-### Observing ML Model Improvement
+### Improving Prediction Quality Over Time
 
-Over iterations, the model's prediction accuracy improves:
+Smart Tests predictions improve as it collects more data from your test runs:
 
-**Iteration 1-2:**
-- Limited historical data
-- Conservative selection (may include extra tests)
-- Baseline accuracy: ~80%
+**First few iterations:** Smart Tests analyzes code structure and test file
+similarity. Predictions are useful immediately but become more precise with data.
 
-**Iteration 3-5:**
-- Correlations emerge between file changes and test failures
-- Subset selection becomes more precise
-- Accuracy: ~90%
+**With accumulated history:** As Smart Tests sees which tests pass and fail
+across different code changes, it refines its understanding of which tests
+are sensitive to which parts of the codebase.
 
-**Iteration 10+:**
-- Strong confidence in predictions
-- Optimal balance of coverage and speed
-- Accuracy: ~95%+
+Recording both passing and failing test sessions contributes to prediction
+quality. This is why the official onboarding guide recommends starting in
+observation mode to accumulate data before going live.
 
-![PLACEHOLDER_GRAPH: Line graph showing accuracy improvement over iterations]
-<!-- Add line graph with X-axis: Iterations (1-10), Y-axis: Subset Accuracy (%), showing upward trend -->
+### Defensive Runs (Production Best Practice)
+
+When using PTS in production, always run the **full test suite** at some point
+in your delivery pipeline — typically post-merge or as a nightly job. This
+catches any issues the subset may have missed.
+
+Record these full runs with `smart-tests record tests` so Smart Tests can
+use the complete results to improve future predictions.
+
+See [Use-cases for Predictive Test Selection](https://docs.cloudbees.com/docs/cloudbees-smart-tests/latest/features/predictive-test-selection/use-cases-for-predictive-test-selection)
+for recommended pipeline topologies.
 
 ### What to Look For in the Results
 
@@ -785,8 +853,6 @@ Over iterations, the model's prediction accuracy improves:
 ✅ **No critical failures missed** (low false negative rate)
 ✅ **Model training progress** visible in model inspection
 
-![PLACEHOLDER_SCREENSHOT: Smart Tests dashboard summary view]
-<!-- Add screenshot showing key metrics dashboard with trends over time -->
 
 ---
 
@@ -965,21 +1031,35 @@ After the first iteration completes, subsequent iterations will use ML-based pre
 
 ---
 
-#### Issue: `LAUNCHABLE_TOKEN` not set error
+#### Issue: `SMART_TESTS_TOKEN` not set error
 
 **Solution:** Export your token
 
 ```bash
-export LAUNCHABLE_TOKEN="<your-token>"
+export SMART_TESTS_TOKEN="<your-token>"
 # Or
 source .env  # If you have a .env file
 ```
 
 Verify:
 ```bash
-echo $LAUNCHABLE_TOKEN
+echo $SMART_TESTS_TOKEN
 # Should display your token
 ```
+
+---
+
+#### Issue: `smart-tests record tests` fails or shows unexpected results
+
+**Solution:** Validate your JUnit XML reports before sending them:
+
+```bash
+python3 tools/validate_junit_xml.py cicd/temp/test-results/
+```
+
+See [tools/README.md](tools/README.md) for details on what the validator checks.
+Common issues include missing `classname` attributes (required for PTS file mapping)
+and missing `time` attributes (required for accurate subset duration estimates).
 
 ---
 

@@ -27,6 +27,8 @@ jobs:
         shell: bash
         env:
           SMART_TESTS_TOKEN: ${{ secrets.SMART_TESTS_KEY }}
+          SMART_TESTS_ORGANIZATION: ${{ vars.SMART_TESTS_ORG || '' }}
+          SMART_TESTS_WORKSPACE: ${{ vars.SMART_TESTS_WS || '' }}
           ITERATIONS: ${{ inputs.iterations || '5' }}
         run: |
           cd source
