@@ -39,8 +39,9 @@ for ((i = 1; i <= ITERATIONS; i++)); do
   smart-tests record session --test-suite "random_pytest" --observation --build $NAME > cicd/temp/session.txt
 
   # Subset and test
-  cat test/test_list.txt | smart-tests subset  --session $(cat cicd/temp/session.txt) --target 20% pytest > cicd/temp/subset.txt
-  export TEST_SLEEP_TIME=0 
+  cat test/test_list.txt | smart-tests subset  --session $(cat cicd/temp/session.txt)  --target 20% pytest > cicd/temp/subset.txt
+
+  export TEST_SLEEP_TIME=10
   pytest -n auto -o junit_family=legacy --junit-xml=cicd/temp/test-results/subset.xml @cicd/temp/subset.txt
 
   # Report to Smart Tests

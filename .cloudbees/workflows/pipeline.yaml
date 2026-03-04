@@ -23,8 +23,8 @@ jobs:
           fetch-depth: 0
 
       - name: Run pipeline iterations
-        uses: docker://cloudbees/smart-tests-cli:v2.0
-        shell: sh
+        uses: docker://python:3.11-slim
+        shell: bash
         env:
           SMART_TESTS_TOKEN: ${{ secrets.SMART_TESTS_KEY }}
           ITERATIONS: ${{ inputs.iterations || '5' }}
@@ -37,17 +37,17 @@ jobs:
           echo "========================================"
           echo ""
 
+          # Install git (required for pipeline)
+          apt-get update && apt-get install -y git --no-install-recommends
+
           # Configure git for commits during pipeline
           git config --global --add safe.directory /cloudbees/workspace/source
           git config --global user.email "ci@cloudbees.io"
           git config --global user.name "CloudBees CI"
 
-          # Install Python and dependencies
-          echo "Installing Python and dependencies..."
-          pip3 install --quiet --user -r requirements.txt
-
-          # Add pip user install location to PATH
-          export PATH="/cloudbees/home/.local/bin:$PATH"
+          # Install Python dependencies including smart-tests-cli
+          echo "Installing dependencies from requirements.txt..."
+          pip3 install --quiet -r requirements.txt
 
           # Run the pipeline with bash (script uses bash syntax)
           bash cicd/pipeline.sh $ITERATIONS
