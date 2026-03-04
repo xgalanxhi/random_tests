@@ -5,11 +5,12 @@ Welcome to the Smart Tests Predictive Test Selection (PTS) demonstration lab! Th
 ## What This Lab Demonstrates
 
 This project simulates a real-world testing scenario where:
-- A Python calculator application has **103 tests** that each take **60 seconds** to run (total: ~103 minutes)
+- A Python calculator application has **103 tests** that simulate expensive operations (configurable: 10-60 seconds each)
 - Code mutations are introduced randomly to simulate development changes
 - Smart Tests uses LLM-based code analysis to predict which tests are affected and selects only **20% of the test suite**
 - Tests run in parallel using pytest-xdist for maximum efficiency
 - Results are tracked across multiple iterations to show learning improvements
+- Pipeline uses 10-second test delay for practical demos (configurable via `TEST_SLEEP_TIME`)
 
 **By the end of this lab**, you'll understand how Predictive Test Selection can cut test execution time by **~80%** while maintaining confidence in code quality.
 
@@ -261,7 +262,7 @@ random_tests/
 ├── backup/
 │   └── calculator/              # Clean backup for resets between iterations
 ├── test/
-│   ├── test_calculator.py       # 103 tests (each sleeps 60s)
+│   ├── test_calculator.py       # 103 tests (configurable sleep: 10-60s)
 │   └── test_list.txt            # Full list of test identifiers
 ├── cicd/
 │   ├── pipeline.sh              # ⭐ Main automation script
@@ -286,7 +287,7 @@ This project was refactored to follow Python best practices and CI/CD convention
 - Imported by tests via path manipulation
 
 **Tests (`test/`)**
-- `test_calculator.py` - Test suite with intentional 60-second delays to simulate expensive tests
+- `test_calculator.py` - Test suite with configurable delays (10-60s via `TEST_SLEEP_TIME`) to simulate expensive tests
 - `test_list.txt` - Full list of test identifiers for Smart Tests
 
 **CI/CD (`cicd/`)**
@@ -331,6 +332,21 @@ Let's run a single iteration to see how the system works:
 8. ▶️ **Test Execution**: Selected tests run in parallel with pytest-xdist
 9. 📊 **Result Reporting**: Results are sent back to Smart Tests
 
+> **⏱️ Test Execution Time:**
+> The test suite is designed to simulate expensive tests with configurable sleep time:
+>
+> - **Default:** 60 seconds per test (simulates real-world expensive operations)
+> - **Pipeline override:** 10 seconds per test (set via `TEST_SLEEP_TIME=10` for faster demos)
+>
+> This means:
+> - **Full suite (103 tests):** ~103 min (60s/test) or ~17 min (10s/test) sequential
+> - **Subset (21 tests, 20%):** ~21 min (60s/test) or ~3-4 min (10s/test) sequential
+> - **With parallel execution (`-n auto`):** Time divided by number of CPU cores
+>
+> The pipeline uses the 10-second setting for practical demonstration purposes. You can:
+> - Adjust it in `cicd/pipeline.sh` line 51: `export TEST_SLEEP_TIME=10`
+> - Remove the line entirely to use the full 60-second delay
+> - Set it to any value: `export TEST_SLEEP_TIME=5` for even faster demos
 
 You should see output like:
 
@@ -952,16 +968,43 @@ If you need to debug individual test failures, run without parallelization:
 pytest --junit-xml=test-results/subset.xml @subset.txt
 ```
 
-### Reducing Test Sleep Time (Faster Demo)
+### Adjusting Test Sleep Time
 
-For quicker demonstrations, reduce the sleep time in `test/test_calculator.py`:
+Tests simulate expensive operations with configurable sleep time. The pipeline defaults to **10 seconds** for practical demos.
 
-```python
-# Change from 60 seconds to 10 seconds
-time.sleep(10)
+**Option 1: Modify the pipeline (recommended)**
+
+Edit `cicd/pipeline.sh` line 51:
+
+```bash
+# Current: 10 seconds (fast demos)
+export TEST_SLEEP_TIME=10
+
+# For faster testing
+export TEST_SLEEP_TIME=5
+
+# For realistic simulation (60 seconds)
+export TEST_SLEEP_TIME=60
+
+# Or remove the line entirely to use default (60s)
 ```
 
-Then tests complete faster, making demos more interactive.
+**Option 2: Set environment variable before running**
+
+```bash
+TEST_SLEEP_TIME=5 ./cicd/pipeline.sh 3
+```
+
+**Option 3: Edit the test file directly**
+
+Modify `test/test_calculator.py` line 24:
+
+```python
+# Change default from 60 to another value
+TEST_SLEEP_TIME = int(os.getenv('TEST_SLEEP_TIME', '30'))
+```
+
+The environment variable approach (Options 1-2) is recommended as it doesn't require code changes.
 
 ### Analyzing Learning Progress
 
