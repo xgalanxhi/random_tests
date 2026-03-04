@@ -25,7 +25,11 @@ random_tests/
 ├── cicd/                    # CI/CD automation
 │   ├── pipeline.sh
 │   ├── mutate_random_function.py
+│   ├── check_learning_progress.sh
 │   └── temp/               # Temporary files (gitignored)
+├── tools/                   # Utility tools
+│   ├── validate_junit_xml.py
+│   └── README.md
 └── .cloudbees/workflows/    # CloudBees CI/CD integration
 ```
 
@@ -262,6 +266,8 @@ random_tests/
 ├── cicd/
 │   ├── pipeline.sh              # ⭐ Main automation script
 │   ├── mutate_random_function.py # Random code mutation script
+│   ├── check_learning_progress.sh # Analyze Smart Tests learning across iterations
+│   ├── subset_history.txt       # All subset IDs from pipeline runs
 │   └── temp/                    # Temporary files (gitignored)
 │       ├── subset.txt    # Generated subset (20% of tests)
 │       ├── session.txt   # Current session ID
@@ -286,6 +292,8 @@ This project was refactored to follow Python best practices and CI/CD convention
 **CI/CD (`cicd/`)**
 - `pipeline.sh` - Main automation script orchestrating the entire demo flow
 - `mutate_random_function.py` - Randomly modifies calculator functions to simulate code changes
+- `check_learning_progress.sh` - Analyzes how Smart Tests predictions evolved across iterations
+- `subset_history.txt` - Tracks all subset IDs created by the pipeline (auto-generated)
 - `temp/` - **All temporary files (gitignored)**:
   - `session.txt` - Current test session ID
   - `subset.txt` - Generated 20% test subset
@@ -504,13 +512,59 @@ This helps you evaluate subset quality before fully enabling PTS.
 
 #### Compare Subsets Across Iterations
 
-To see how subset selection evolved:
+To see how subset selection evolved, you can compare individual subsets:
 
 ```bash
 # Get subset IDs from two different iterations
 smart-tests compare subsets --subset-id-before <SUBSET_ID_1> --subset-id-after <SUBSET_ID_2>
 ```
 
+This shows which tests were promoted (↑) or demoted (↓) in priority, helping you understand how Smart Tests adapts to code changes.
+
+#### Automated Learning Progress Analysis
+
+The project includes a convenience script to automatically compare all consecutive subsets from your pipeline runs:
+
+```bash
+./cicd/check_learning_progress.sh
+```
+
+**What it does:**
+- Reads all subset IDs from `cicd/subset_history.txt` (automatically populated by the pipeline)
+- Compares each consecutive pair of subsets (1→2, 2→3, 3→4, etc.)
+- Shows detailed ranking changes for all 102 tests across all comparisons
+- Displays which code files affected each ranking change
+
+**Example output:**
+
+```
+🔍 Smart Tests Learning Progress Analysis
+===========================================
+Total subsets in history: 12
+
+📊 Comparison 1: Subset 1960631 → 1960637
+-------------------------------------------
+PTS subset change summary:
+────────────────────────────────
+-> 102 tests analyzed | 52 ↑ promoted | 48 ↓ demoted
+-> Code files affected: src/calculator/custom_op_55.py
+────────────────────────────────
+
+Δ Rank      Subset Rank  Test Name                                           Reason
+--------  -------------  --------------------------------------------------  ------------
+↑16                   1  test_floor_divide                                   Changed file: ...
+↑32                   2  test_custom_operations[custom_op_66-441]          Changed file: ...
+...
+```
+
+**When to use it:**
+- After running multiple pipeline iterations to see how predictions evolved
+- To validate that Smart Tests correctly identifies changed files
+- To demonstrate ML learning progression in demos
+- To troubleshoot unexpected subset selections
+
+**Behind the scenes:**
+The pipeline automatically captures each subset ID and appends it to `cicd/subset_history.txt`. The learning progress script then uses the Smart Tests CLI to compare all consecutive pairs, showing you the complete learning journey.
 
 ---
 
@@ -908,6 +962,22 @@ time.sleep(10)
 ```
 
 Then tests complete faster, making demos more interactive.
+
+### Analyzing Learning Progress
+
+After running multiple iterations, analyze how Smart Tests predictions evolved:
+
+```bash
+./cicd/check_learning_progress.sh
+```
+
+This script:
+- Reads all subset IDs from your pipeline runs (`cicd/subset_history.txt`)
+- Compares consecutive subsets to show test ranking changes
+- Displays which code files affected the changes
+- Provides a complete view of the ML learning journey
+
+Perfect for demos, troubleshooting, and validating that Smart Tests correctly identifies changed files. See [Step 8: Analyze Results](#step-8-analyze-results-in-smart-tests) for detailed output examples.
 
 ---
 
