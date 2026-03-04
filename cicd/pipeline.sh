@@ -39,7 +39,14 @@ for ((i = 1; i <= ITERATIONS; i++)); do
   smart-tests record session --test-suite "random_pytest" --observation --build $NAME > cicd/temp/session.txt
 
   # Subset and test
-  cat test/test_list.txt | smart-tests subset  --session $(cat cicd/temp/session.txt)  --target 20% pytest > cicd/temp/subset.txt
+  cat test/test_list.txt | smart-tests subset  --session $(cat cicd/temp/session.txt)  --target 20% pytest > cicd/temp/subset.txt 2> cicd/temp/subset_output.txt
+
+  # Extract and store subset ID from output
+  SUBSET_ID=$(grep 'Smart Tests created subset' cicd/temp/subset_output.txt | sed -E 's/.*Smart Tests created subset ([0-9]+).*/\1/')
+  if [ -n "$SUBSET_ID" ]; then
+    echo "$SUBSET_ID" >> cicd/subset_history.txt
+    echo "📝 Stored subset ID: $SUBSET_ID"
+  fi
 
   export TEST_SLEEP_TIME=10
   pytest -n auto -o junit_family=legacy --junit-xml=cicd/temp/test-results/subset.xml @cicd/temp/subset.txt
